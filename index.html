@@ -735,7 +735,12 @@ function flashLines(rows, cols) {
 // HUD
 // ═══════════════════════════════════════════════════════
 function addScore(n) {
-  score+=n; if(score>best) best=score; updateHUD();
+  score += n;
+  if (score > best) {
+    best = score;
+    saveRec(score);
+  }
+  updateHUD();
 }
 function updateHUD() {
   var el=document.getElementById('gsc');
@@ -811,10 +816,13 @@ function setPause(on) {
 // ═══════════════════════════════════════════════════════
 function getRecs(){try{return JSON.parse(localStorage.getItem('bb6')||'[]');}catch(e){return[];}}
 function saveRec(s){
-  var r=getRecs(); r.push({score:s,date:new Date().toLocaleDateString('ru')});
-  r.sort(function(a,b){return b.score-a.score;}); r=r.slice(0,10);
+  if (s <= 0) return false;
+  var r=getRecs();
+  r.push({score:s,date:new Date().toLocaleDateString('ru')});
+  r.sort(function(a,b){return b.score-a.score;});
+  r=r.slice(0,10);
   localStorage.setItem('bb6',JSON.stringify(r));
-  return r[0].score===s&&r.filter(function(x){return x.score===s;}).length===1;
+  return r[0].score===s;
 }
 function getBest(){var r=getRecs();return r.length?r[0].score:0;}
 function renderRecs(){
@@ -911,7 +919,7 @@ function goMenu(){
 // ═══════════════════════════════════════════════════════
 var menuRaf = null;
 var menuPieces = [];   // {cells, col, x, y, vx, vy, angle, va, alpha, scl, vscl}
-var MS = 14; // cell size in menu canvas
+var MS = 20; // cell size in menu canvas — bigger = more recognisable
 
 // Pick a curated set of interesting shapes for display
 var MENU_SHAPES = [
@@ -959,14 +967,14 @@ function spawnMenuPiece(mw, mh) {
   // start from edge
   var edge  = Math.floor(Math.random()*4);
   var x, y, vx, vy;
-  var spd = 0.22 + Math.random()*0.18;
-  if(edge===0){x=Math.random()*(mw-dim.w);y=-dim.h-10;vx=(Math.random()-.5)*0.3;vy=spd;}
-  else if(edge===1){x=mw+10;y=Math.random()*(mh-dim.h);vx=-spd;vy=(Math.random()-.5)*0.3;}
-  else if(edge===2){x=Math.random()*(mw-dim.w);y=mh+10;vx=(Math.random()-.5)*0.3;vy=-spd;}
-  else{x=-dim.w-10;y=Math.random()*(mh-dim.h);vx=spd;vy=(Math.random()-.5)*0.3;}
+  var spd = 0.18 + Math.random()*0.14;
+  if(edge===0){x=Math.random()*(mw-dim.w);y=-dim.h-10;vx=(Math.random()-.5)*0.15;vy=spd;}
+  else if(edge===1){x=mw+10;y=Math.random()*(mh-dim.h);vx=-spd;vy=(Math.random()-.5)*0.15;}
+  else if(edge===2){x=Math.random()*(mw-dim.w);y=mh+10;vx=(Math.random()-.5)*0.15;vy=-spd;}
+  else{x=-dim.w-10;y=Math.random()*(mh-dim.h);vx=spd;vy=(Math.random()-.5)*0.15;}
   return {cells:shape, col:col, dim:dim, x:x, y:y, vx:vx, vy:vy,
-    angle:Math.random()*Math.PI*2, va:(Math.random()-.5)*0.008,
-    alpha:0, targetAlpha:0.72+Math.random()*.18, fadeIn:true};
+    angle:0, va:0,  // NO rotation — shapes must be recognisable
+    alpha:0, targetAlpha:0.82+Math.random()*.15, fadeIn:true};
 }
 
 function setupMenu(){
@@ -984,22 +992,21 @@ function setupMenu(){
   // Canvas for floating pieces
   var cv = document.getElementById('menuShapes');
   var mw = Math.min(window.innerWidth, 420);
-  var mh = 140;
+  var mh = 160;
   cv.width  = mw;
   cv.height = mh;
   cv.style.width  = mw + 'px';
   cv.style.height = mh + 'px';
   var ctx = cv.getContext('2d');
 
-  // Seed initial pieces
+  // Seed initial pieces — pre-scattered so canvas isn't empty
   menuPieces = [];
-  for(var i=0;i<9;i++){
+  for(var i=0;i<10;i++){
     var p = spawnMenuPiece(mw, mh);
-    // scatter randomly on canvas initially
     var dim2 = p.dim;
     p.x = Math.random()*(mw - dim2.w);
     p.y = Math.random()*(mh - dim2.h);
-    p.alpha = p.targetAlpha * Math.random();
+    p.alpha = p.targetAlpha * (0.5 + Math.random()*0.5);
     p.fadeIn = false;
     menuPieces.push(p);
   }
@@ -1023,15 +1030,11 @@ function setupMenu(){
       var margin = 20;
       var oof = p.x < -p.dim.w-margin || p.x > mw+margin || p.y < -p.dim.h-margin || p.y > mh+margin;
       if(oof) return false;
-      // draw piece rotated around its center
-      var cx2 = p.x + p.dim.w/2, cy2 = p.y + p.dim.h/2;
+      // draw piece upright (no rotation — shapes must be recognisable)
       ctx.save();
       ctx.globalAlpha = p.alpha;
-      ctx.translate(cx2, cy2);
-      ctx.rotate(p.angle);
-      ctx.translate(-p.dim.w/2, -p.dim.h/2);
       p.cells.forEach(function(cell){
-        drawMenuBlock(ctx, cell.c*MS, cell.r*MS, p.col);
+        drawMenuBlock(ctx, p.x + cell.c*MS, p.y + cell.r*MS, p.col);
       });
       ctx.restore();
       return true;
@@ -1056,6 +1059,16 @@ document.getElementById('btnDM').addEventListener('click',goMenu);
 
 // BOOT
 setupMenu();
+
+// ── Сохранение при выходе (Telegram + браузер) ──
+var _origGoMenu = goMenu;
+goMenu = function() { saveRec(score); _origGoMenu(); };
+
+if (window.Telegram && window.Telegram.WebApp) {
+  window.Telegram.WebApp.onEvent('viewportChanged', function() { saveRec(score); });
+}
+window.addEventListener('beforeunload', function() { saveRec(score); });
+window.addEventListener('pagehide',     function() { saveRec(score); });
 </script>
 </body>
 </html>
