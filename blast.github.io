@@ -14,20 +14,28 @@ html,body{width:100%;height:100%;overflow:hidden;touch-action:none;background:#0
 .scr.off{opacity:0;pointer-events:none;transform:scale(.95)}
 
 /* ── MENU ── */
-#sMenu{background:radial-gradient(ellipse at 35% 25%,#1a2540 0%,#0a0e1a 65%)}
+#sMenu{
+  background:
+    radial-gradient(ellipse at 20% 15%, rgba(167,139,250,.18) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 75%, rgba(244,63,94,.15) 0%, transparent 50%),
+    radial-gradient(ellipse at 55% 50%, rgba(59,130,246,.1) 0%, transparent 60%),
+    #0a0e1a;
+}
 .fbg{position:absolute;inset:0;overflow:hidden;pointer-events:none}
-.fb{position:absolute;border-radius:10px;opacity:.12;animation:fbrise linear infinite}
+.fb{position:absolute;border-radius:10px;opacity:.08;animation:fbrise linear infinite}
 @keyframes fbrise{from{transform:translateY(108vh) rotate(0)}to{transform:translateY(-10vh) rotate(400deg)}}
 
 .menu-inner{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;width:100%}
-.logo{font-family:'Fredoka One',cursive;font-size:clamp(46px,14vw,76px);
+.logo{
+  font-family:'Fredoka One',cursive;font-size:clamp(46px,14vw,76px);
   background:linear-gradient(135deg,#ffd47e 0%,#ff6b6b 45%,#a78bfa 100%);
   -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
-  letter-spacing:2px;line-height:1}
-.logo-sub{font-size:11px;color:rgba(255,255,255,.3);letter-spacing:6px;text-transform:uppercase;margin-top:5px}
-.mprev{display:flex;gap:10px;margin:22px 0 26px;align-items:flex-end}
-.mpb{border-radius:9px;box-shadow:0 4px 14px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.4),inset 0 -2px 0 rgba(0,0,0,.25);animation:prevsway ease-in-out infinite alternate}
-@keyframes prevsway{from{transform:translateY(0)}to{transform:translateY(-7px)}}
+  letter-spacing:2px;line-height:1;margin-bottom:4px;
+}
+.menu-shapes{
+  display:block;margin:14px 0 20px;
+  filter:drop-shadow(0 6px 20px rgba(0,0,0,.6));
+}
 .mbtn{position:relative;z-index:2;width:min(84vw,275px);padding:16px 24px;border:none;border-radius:20px;
   font-family:'Fredoka One',cursive;font-size:21px;color:#fff;cursor:pointer;margin:6px 0;
   transition:transform .1s,box-shadow .12s;letter-spacing:.5px}
@@ -150,10 +158,10 @@ html,body{width:100%;height:100%;overflow:hidden;touch-action:none;background:#0
   <div class="fbg" id="fbg"></div>
   <div class="menu-inner">
     <div class="logo">БЛОК БЛАСТ</div>
-    <div class="logo-sub">Block Puzzle</div>
-    <div class="mprev" id="mprev"></div>
+    <canvas id="menuShapes" class="menu-shapes"></canvas>
     <button class="mbtn mbtn-p" id="btnPlay">▶ &nbsp;ИГРАТЬ</button>
     <button class="mbtn mbtn-r" id="btnRec">РЕКОРДЫ</button>
+
 
   </div>
   <div class="dev">Разработчик: <span class="devname">𝕯𝕴𝕸𝕬</span></div>
@@ -216,58 +224,76 @@ function ac() {
   return ACtx;
 }
 
-// Simple safe oscillator note
+// Two-oscillator note: main sine + subtle harmonic for warmth
 function playNote(freq, type, vol, atk, sus, rel, delay) {
   delay = delay || 0;
   try {
     var ctx = ac();
-    var o = ctx.createOscillator();
-    var g = ctx.createGain();
-    o.connect(g);
-    g.connect(ctx.destination);
-    o.type = type;
-    o.frequency.value = freq;
     var t = ctx.currentTime + delay;
+    // Main oscillator
+    var o = ctx.createOscillator(), g = ctx.createGain();
+    o.type = type; o.frequency.value = freq;
     g.gain.setValueAtTime(0, t);
     g.gain.linearRampToValueAtTime(vol, t + atk);
     g.gain.setValueAtTime(vol, t + atk + sus);
-    g.gain.linearRampToValueAtTime(0, t + atk + sus + rel);
-    o.start(t);
-    o.stop(t + atk + sus + rel + 0.01);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + atk + sus + rel);
+    o.connect(g); g.connect(ctx.destination);
+    o.start(t); o.stop(t + atk + sus + rel + 0.01);
+    // Soft harmonic overtone
+    var o2 = ctx.createOscillator(), g2 = ctx.createGain();
+    o2.type = 'sine'; o2.frequency.value = freq * 2;
+    g2.gain.setValueAtTime(0, t);
+    g2.gain.linearRampToValueAtTime(vol * 0.18, t + atk);
+    g2.gain.exponentialRampToValueAtTime(0.0001, t + atk + sus * 0.5 + rel * 0.4);
+    o2.connect(g2); g2.connect(ctx.destination);
+    o2.start(t); o2.stop(t + atk + sus + rel + 0.01);
   } catch(e) {}
 }
 
-// SFX: place — two quick chime notes
+// SFX: place — warm xylophone-like "tock" + shimmer
 function sfxPlace() {
-  playNote(523, 'sine', 0.18, 0.005, 0.04, 0.15);
-  playNote(784, 'sine', 0.12, 0.005, 0.02, 0.12, 0.07);
+  playNote(880,  'sine', 0.2,  0.004, 0.015, 0.18);
+  playNote(1174, 'sine', 0.1,  0.004, 0.008, 0.14, 0.045);
 }
-// SFX: clear — rising arpeggio
+// SFX: clear — bright upward harp cascade
 function sfxClear(n) {
-  var ns = [523,659,784,1047,1319];
-  for (var i = 0; i < Math.min(n + 2, 5); i++) {
-    playNote(ns[i], 'sine', 0.22, 0.006, 0.06, 0.18, i * 0.065);
+  var ns = [523,659,784,1047,1319,1568];
+  var cnt = Math.min(n + 2, ns.length);
+  for (var i = 0; i < cnt; i++) {
+    playNote(ns[i], 'sine', 0.22, 0.005, 0.04, 0.22, i * 0.07);
   }
 }
-// SFX: combo — pleasant chord hit
+// SFX: combo — bright major chord sparkle, higher with each level
 function sfxCombo(lv) {
-  var root = [523, 587, 659, 698, 784][Math.min(lv - 2, 4)];
-  playNote(root,        'sine',     0.2,  0.006, 0.05, 0.22);
-  playNote(root * 1.25, 'sine',     0.15, 0.008, 0.04, 0.2, 0.04);
-  playNote(root * 1.5,  'triangle', 0.1,  0.01,  0.03, 0.18, 0.08);
+  var roots = [523,587,659,740,784,880];
+  var root = roots[Math.min(lv - 2, roots.length - 1)];
+  playNote(root,        'sine', 0.22, 0.005, 0.04, 0.28, 0);
+  playNote(root * 1.26, 'sine', 0.18, 0.005, 0.03, 0.24, 0.05);
+  playNote(root * 1.5,  'sine', 0.14, 0.005, 0.02, 0.22, 0.10);
+  playNote(root * 2,    'sine', 0.08, 0.005, 0.01, 0.18, 0.16);
 }
-// SFX: error — soft low thud
+// SFX: error — muted soft thud, not jarring
 function sfxNo() {
-  playNote(160, 'sine', 0.15, 0.005, 0.03, 0.1);
+  try {
+    var ctx = ac(), t = ctx.currentTime;
+    var o = ctx.createOscillator(), g = ctx.createGain();
+    o.type = 'sine'; o.frequency.setValueAtTime(220, t);
+    o.frequency.exponentialRampToValueAtTime(100, t + 0.12);
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(0.16, t + 0.01);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.18);
+    o.connect(g); g.connect(ctx.destination);
+    o.start(t); o.stop(t + 0.2);
+  } catch(e) {}
 }
-// SFX: menu click
+// SFX: menu click — crisp high tick
 function sfxClick() {
-  playNote(660, 'sine', 0.14, 0.005, 0.01, 0.08);
+  playNote(1047, 'sine', 0.12, 0.004, 0.005, 0.07);
 }
-// SFX: game over — descending
+// SFX: game over — slow descending minor
 function sfxDead() {
-  [784, 659, 523, 392].forEach(function(f, i) {
-    playNote(f, 'sine', 0.2, 0.01, 0.08, 0.2, i * 0.14);
+  [784, 698, 587, 440, 349].forEach(function(f, i) {
+    playNote(f, 'sine', 0.18, 0.01, 0.06, 0.25, i * 0.18);
   });
 }
 
@@ -877,35 +903,149 @@ function goMenu(){
   document.getElementById('ovD').classList.remove('on');
   document.getElementById('ovP').classList.remove('on');
   sfxClick(); showScr('sMenu');
+  setupMenu();
 }
 
 // ═══════════════════════════════════════════════════════
-// MENU BG
+// MENU — animated canvas with real game pieces
 // ═══════════════════════════════════════════════════════
+var menuRaf = null;
+var menuPieces = [];   // {cells, col, x, y, vx, vy, angle, va, alpha, scl, vscl}
+var MS = 14; // cell size in menu canvas
+
+// Pick a curated set of interesting shapes for display
+var MENU_SHAPES = [
+  [{r:0,c:0},{r:0,c:1},{r:0,c:2},{r:1,c:0},{r:1,c:1},{r:1,c:2}], // 2x3
+  [{r:0,c:1},{r:1,c:0},{r:1,c:1},{r:1,c:2},{r:2,c:1}],            // plus
+  [{r:0,c:0},{r:0,c:1},{r:0,c:2},{r:0,c:3}],                       // line4
+  [{r:0,c:0},{r:0,c:1},{r:1,c:0},{r:1,c:1}],                       // 2x2
+  [{r:0,c:0},{r:1,c:0},{r:1,c:1},{r:2,c:1}],                       // S
+  [{r:0,c:1},{r:0,c:2},{r:1,c:0},{r:1,c:1}],                       // Z
+  [{r:0,c:0},{r:0,c:1},{r:0,c:2},{r:1,c:2}],                       // L
+  [{r:0,c:0},{r:0,c:1},{r:0,c:2},{r:1,c:0}],                       // J
+  [{r:0,c:0},{r:1,c:0},{r:2,c:0},{r:3,c:0}],                       // line4 vert
+  [{r:0,c:0},{r:0,c:1},{r:0,c:2},{r:1,c:0},{r:1,c:1},{r:1,c:2},{r:2,c:0},{r:2,c:1},{r:2,c:2}], // 3x3
+];
+
+function menuPieceDims(cells) {
+  var mr=0,mc=0;
+  cells.forEach(function(c){if(c.r>mr)mr=c.r;if(c.c>mc)mc=c.c;});
+  return {w:(mc+1)*MS, h:(mr+1)*MS};
+}
+
+function drawMenuBlock(ctx, px, py, col) {
+  var m=1, x=px+m, y=py+m, w=MS-m*2, h=MS-m*2, r=Math.max(0,Math.min(w*.22,4));
+  if(w<2||h<2) return;
+  // shadow
+  ctx.fillStyle=col.sd; rrect(ctx,x+1,y+2,w,h,r); ctx.fill();
+  // body
+  ctx.fillStyle=col.f;  rrect(ctx,x,y,w,h,r);   ctx.fill();
+  // shine
+  var gr=ctx.createLinearGradient(x,y,x,y+h*.55);
+  gr.addColorStop(0,'rgba(255,255,255,.45)'); gr.addColorStop(1,'rgba(255,255,255,0)');
+  ctx.fillStyle=gr; rrect(ctx,x,y,w,h,r); ctx.fill();
+  // top edge
+  ctx.fillStyle=col.sh; rrect(ctx,x+2,y+1.5,w-4,Math.max(1,h*.1),r*.4); ctx.fill();
+  // glint
+  ctx.fillStyle='rgba(255,255,255,.65)';
+  ctx.beginPath(); ctx.arc(x+w*.24,y+h*.23,Math.max(.5,MS*.09),0,Math.PI*2); ctx.fill();
+}
+
+function spawnMenuPiece(mw, mh) {
+  var shIdx = Math.floor(Math.random()*MENU_SHAPES.length);
+  var shape = MENU_SHAPES[shIdx];
+  var col   = COLS[Math.floor(Math.random()*COLS.length)];
+  var dim   = menuPieceDims(shape);
+  // start from edge
+  var edge  = Math.floor(Math.random()*4);
+  var x, y, vx, vy;
+  var spd = 0.22 + Math.random()*0.18;
+  if(edge===0){x=Math.random()*(mw-dim.w);y=-dim.h-10;vx=(Math.random()-.5)*0.3;vy=spd;}
+  else if(edge===1){x=mw+10;y=Math.random()*(mh-dim.h);vx=-spd;vy=(Math.random()-.5)*0.3;}
+  else if(edge===2){x=Math.random()*(mw-dim.w);y=mh+10;vx=(Math.random()-.5)*0.3;vy=-spd;}
+  else{x=-dim.w-10;y=Math.random()*(mh-dim.h);vx=spd;vy=(Math.random()-.5)*0.3;}
+  return {cells:shape, col:col, dim:dim, x:x, y:y, vx:vx, vy:vy,
+    angle:Math.random()*Math.PI*2, va:(Math.random()-.5)*0.008,
+    alpha:0, targetAlpha:0.72+Math.random()*.18, fadeIn:true};
+}
+
 function setupMenu(){
+  // Floating background particles (keep existing fbg)
   var fbg=document.getElementById('fbg'); fbg.innerHTML='';
-  COLS.concat(COLS).slice(0,10).forEach(function(col,i){
+  COLS.forEach(function(col,i){
     var el=document.createElement('div'); el.className='fb';
-    var sz=18+Math.random()*50;
+    var sz=14+Math.random()*36;
     el.style.cssText='width:'+sz+'px;height:'+sz+'px;background:'+col.f+
-      ';left:'+Math.random()*96+'%;animation-duration:'+(8+Math.random()*13)+'s;'+
-      'animation-delay:'+(-Math.random()*16)+'s;border-radius:'+(6+Math.random()*12)+'px';
+      ';left:'+Math.random()*96+'%;animation-duration:'+(10+Math.random()*16)+'s;'+
+      'animation-delay:'+(-Math.random()*20)+'s;border-radius:'+(4+Math.random()*10)+'px';
     fbg.appendChild(el);
   });
-  var pv=document.getElementById('mprev'); pv.innerHTML='';
-  COLS.slice(0,5).forEach(function(col,i){
-    var b=document.createElement('div'); b.className='mpb';
-    var sz=28+i*5;
-    b.style.cssText='width:'+sz+'px;height:'+sz+'px;background:'+col.f+
-      ';border-radius:'+(sz*0.22)+'px;animation-delay:'+(i*0.2)+'s;animation-duration:'+(2+i*0.25)+'s';
-    pv.appendChild(b);
-  });
+
+  // Canvas for floating pieces
+  var cv = document.getElementById('menuShapes');
+  var mw = Math.min(window.innerWidth, 420);
+  var mh = 140;
+  cv.width  = mw;
+  cv.height = mh;
+  cv.style.width  = mw + 'px';
+  cv.style.height = mh + 'px';
+  var ctx = cv.getContext('2d');
+
+  // Seed initial pieces
+  menuPieces = [];
+  for(var i=0;i<9;i++){
+    var p = spawnMenuPiece(mw, mh);
+    // scatter randomly on canvas initially
+    var dim2 = p.dim;
+    p.x = Math.random()*(mw - dim2.w);
+    p.y = Math.random()*(mh - dim2.h);
+    p.alpha = p.targetAlpha * Math.random();
+    p.fadeIn = false;
+    menuPieces.push(p);
+  }
+
+  if(menuRaf) cancelAnimationFrame(menuRaf);
+
+  function tick() {
+    ctx.clearRect(0,0,mw,mh);
+
+    // spawn new if few pieces
+    if(menuPieces.length < 12 && Math.random()<0.018) {
+      menuPieces.push(spawnMenuPiece(mw,mh));
+    }
+
+    menuPieces = menuPieces.filter(function(p){
+      // fade in
+      if(p.fadeIn){ p.alpha = Math.min(p.alpha + 0.012, p.targetAlpha); if(p.alpha>=p.targetAlpha) p.fadeIn=false; }
+      // move & rotate
+      p.x += p.vx; p.y += p.vy; p.angle += p.va;
+      // fade out near edges
+      var margin = 20;
+      var oof = p.x < -p.dim.w-margin || p.x > mw+margin || p.y < -p.dim.h-margin || p.y > mh+margin;
+      if(oof) return false;
+      // draw piece rotated around its center
+      var cx2 = p.x + p.dim.w/2, cy2 = p.y + p.dim.h/2;
+      ctx.save();
+      ctx.globalAlpha = p.alpha;
+      ctx.translate(cx2, cy2);
+      ctx.rotate(p.angle);
+      ctx.translate(-p.dim.w/2, -p.dim.h/2);
+      p.cells.forEach(function(cell){
+        drawMenuBlock(ctx, cell.c*MS, cell.r*MS, p.col);
+      });
+      ctx.restore();
+      return true;
+    });
+
+    menuRaf = requestAnimationFrame(tick);
+  }
+  tick();
 }
 
 // ═══════════════════════════════════════════════════════
 // BUTTONS
 // ═══════════════════════════════════════════════════════
-document.getElementById('btnPlay').addEventListener('click',function(){sfxClick();showScr('sGame');setTimeout(initGame,60);});
+document.getElementById('btnPlay').addEventListener('click',function(){sfxClick();if(menuRaf){cancelAnimationFrame(menuRaf);menuRaf=null;}showScr('sGame');setTimeout(initGame,60);});
 document.getElementById('btnRec').addEventListener('click',function(){sfxClick();showScr('sRec');renderRecs();});
 document.getElementById('btnRB').addEventListener('click',function(){sfxClick();showScr('sMenu');});
 document.getElementById('btnP').addEventListener('click',function(){if(!dead)setPause(!paused);});
