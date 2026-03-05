@@ -34,7 +34,7 @@ html,body{width:100%;height:100%;overflow:hidden;touch-action:none;background:#0
 .mbtn:active{transform:translateY(3px) scale(.98)}
 .mbtn-p{background:linear-gradient(135deg,#f43f5e,#dc2626);box-shadow:0 8px 24px rgba(244,63,94,.4),inset 0 1px 0 rgba(255,255,255,.2)}
 .mbtn-r{background:linear-gradient(135deg,#3b82f6,#06b6d4);box-shadow:0 8px 24px rgba(59,130,246,.35),inset 0 1px 0 rgba(255,255,255,.2)}
-.mbtn-s{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);box-shadow:0 4px 14px rgba(0,0,0,.2);font-size:15px}
+
 .dev{position:absolute;bottom:20px;z-index:2;font-size:12px;color:rgba(255,255,255,.28);letter-spacing:1px;text-align:center}
 .devname{font-family:'Fredoka One',cursive;font-size:16px;color:#ffd47e}
 
@@ -154,7 +154,7 @@ html,body{width:100%;height:100%;overflow:hidden;touch-action:none;background:#0
     <div class="mprev" id="mprev"></div>
     <button class="mbtn mbtn-p" id="btnPlay">▶ &nbsp;ИГРАТЬ</button>
     <button class="mbtn mbtn-r" id="btnRec">РЕКОРДЫ</button>
-    <button class="mbtn mbtn-s" id="btnSnd">♫ &nbsp;МУЗЫКА: ВКЛ</button>
+
   </div>
   <div class="dev">Разработчик: <span class="devname">𝕯𝕴𝕸𝕬</span></div>
 </div>
@@ -271,271 +271,7 @@ function sfxDead() {
   });
 }
 
-// ══════════════════════════════════════════════
-// WELLERMAN — faithfully arranged for Web Audio
-// Notes: sea shanty melody in D major / Dm
-// ══════════════════════════════════════════════
-var musicOn = true;
-var bgAlive = false;
-var bgTimers = [];
-var bgCtx = null;  // dedicated context for music
-var masterGain = null;
 
-// D major: D4=293.7 E4=329.6 F#4=369.9 G4=392 A4=440 B4=493.9 C#5=554.4 D5=587.3
-// Wellerman melody (simplified but recognizable)
-// Format: [freq, beats] — beat = 0.42s at ~143bpm
-var WELL_MELODY = [
-  // "There once was a ship that put to sea"
-  [293.7,1],[293.7,1],[392,1],[440,1],   [440,1],[493.9,1],[440,1],[392,1],
-  // "The name of the ship was the Billy of Tea"
-  [369.9,1],[369.9,1],[369.9,1],[329.6,1],[293.7,2],[293.7,1],[0,1],
-  // "The winds blew up, her bow dipped down"
-  [293.7,1],[293.7,1],[392,1],[440,1],   [440,1],[493.9,1],[440,1],[392,1],
-  // "Oh blow, my bully boys, blow"
-  [369.9,1],[369.9,1],[329.6,1],[293.7,1],[293.7,2],[0,2],
-  // CHORUS: "Soon may the Wellerman come"
-  [440,1],[440,1],[493.9,1],[554.4,1],   [587.3,1],[554.4,1],[493.9,1],[440,1],
-  // "To bring us sugar and tea and rum"
-  [440,1],[440,1],[493.9,1],[440,1],     [392,2],[392,1],[0,1],
-  // "One day, when the tonguing is done"
-  [369.9,1],[369.9,1],[392,1],[440,1],   [440,1],[493.9,1],[440,1],[392,1],
-  // "We'll take our leave and go"
-  [369.9,1],[329.6,1],[293.7,1],[329.6,1],[293.7,2],[0,2],
-];
-
-// Bass line (root notes of harmony, one per bar of 4 beats)
-var WELL_BASS = [
-  293.7, 293.7, 220, 220,   // D D A A (verse)
-  246.9, 246.9, 261.6, 261.6,
-  293.7, 293.7, 220, 220,
-  246.9, 246.9, 261.6, 261.6,
-  293.7, 293.7, 220, 220,   // D D A A (chorus)
-  246.9, 246.9, 261.6, 261.6,
-  293.7, 293.7, 220, 220,
-  246.9, 246.9, 261.6, 261.6,
-];
-
-// Harmony chords (played as broken chords every bar)
-var WELL_CHORDS = [
-  [293.7, 369.9, 440],  // D maj
-  [293.7, 369.9, 440],
-  [220,   261.6, 329.6],// A min
-  [220,   261.6, 329.6],
-  [246.9, 293.7, 369.9],// B min-ish
-  [261.6, 329.6, 392],  // C (borrowed)
-  [293.7, 369.9, 440],
-  [293.7, 369.9, 440],
-];
-
-function startMusic() {
-  if (!musicOn || bgAlive) return;
-  bgAlive = true;
-  try {
-    bgCtx = ac();
-    masterGain = bgCtx.createGain();
-    masterGain.gain.value = 0;
-    masterGain.connect(bgCtx.destination);
-    // Fade in gently
-    masterGain.gain.setValueAtTime(0, bgCtx.currentTime);
-    masterGain.gain.linearRampToValueAtTime(0.28, bgCtx.currentTime + 1.8);
-
-    var BEAT = 0.42; // seconds per beat (~143 bpm — shanty tempo)
-
-    // ── MELODY ──
-    var melIdx = 0;
-    var melTime = 0; // accumulates beat offset
-    function schedMelody() {
-      if (!bgAlive) return;
-      // Schedule next ~6 seconds of melody
-      var note = WELL_MELODY[melIdx % WELL_MELODY.length];
-      var freq = note[0], beats = note[1];
-      melIdx++;
-
-      if (freq > 0) {
-        try {
-          var o = bgCtx.createOscillator();
-          var g = bgCtx.createGain();
-          o.type = 'triangle';
-          o.frequency.value = freq;
-          var t = bgCtx.currentTime + melTime;
-          var dur = beats * BEAT;
-          g.gain.setValueAtTime(0, t);
-          g.gain.linearRampToValueAtTime(0.32, t + 0.02);
-          g.gain.setValueAtTime(0.32, t + dur * 0.7);
-          g.gain.linearRampToValueAtTime(0, t + dur * 0.92);
-          o.connect(g); g.connect(masterGain);
-          o.start(t); o.stop(t + dur);
-        } catch(e) {}
-      }
-
-      var wait = beats * BEAT * 1000;
-      melTime += beats * BEAT;
-      if (melTime > 1.0) melTime = 0; // reset so we don't drift forward too far
-      // Actually: schedule ahead by real time offset
-      var tid = setTimeout(schedMelody, wait);
-      bgTimers.push(tid);
-    }
-    // Use absolute scheduling instead of relative
-    // Rewrite to use absolute time scheduling (more stable)
-    melIdx = 0;
-    var melAbsTime = bgCtx.currentTime + 0.3;
-    function schedMelBatch() {
-      if (!bgAlive || !masterGain) return;
-      // Schedule 4 seconds worth of notes ahead
-      var horizon = bgCtx.currentTime + 3.5;
-      while (melAbsTime < horizon) {
-        var n = WELL_MELODY[melIdx % WELL_MELODY.length];
-        var f = n[0], b = n[1];
-        melIdx++;
-        var dur = b * BEAT;
-        if (f > 0) {
-          try {
-            var o2 = bgCtx.createOscillator(), g2 = bgCtx.createGain();
-            o2.type = 'triangle'; o2.frequency.value = f;
-            var t2 = melAbsTime;
-            g2.gain.setValueAtTime(0, t2);
-            g2.gain.linearRampToValueAtTime(0.3, t2 + 0.018);
-            g2.gain.setValueAtTime(0.3, t2 + dur * 0.68);
-            g2.gain.linearRampToValueAtTime(0, t2 + dur * 0.9);
-            o2.connect(g2); g2.connect(masterGain);
-            o2.start(t2); o2.stop(t2 + dur + 0.01);
-          } catch(e) {}
-        }
-        melAbsTime += dur;
-      }
-      var tid2 = setTimeout(schedMelBatch, 1800);
-      bgTimers.push(tid2);
-    }
-    schedMelBatch();
-
-    // ── BASS ──
-    var bassIdx = 0;
-    var bassAbsTime = bgCtx.currentTime + 0.3;
-    var BAR = BEAT * 4;
-    function schedBassBatch() {
-      if (!bgAlive || !masterGain) return;
-      var horizon = bgCtx.currentTime + 3.5;
-      while (bassAbsTime < horizon) {
-        var f3 = WELL_BASS[bassIdx % WELL_BASS.length]; bassIdx++;
-        try {
-          var o3 = bgCtx.createOscillator(), g3 = bgCtx.createGain();
-          o3.type = 'sine'; o3.frequency.value = f3;
-          var t3 = bassAbsTime;
-          g3.gain.setValueAtTime(0, t3);
-          g3.gain.linearRampToValueAtTime(0.38, t3 + 0.04);
-          g3.gain.setValueAtTime(0.38, t3 + BAR * 0.6);
-          g3.gain.linearRampToValueAtTime(0, t3 + BAR * 0.85);
-          o3.connect(g3); g3.connect(masterGain);
-          o3.start(t3); o3.stop(t3 + BAR);
-        } catch(e) {}
-        bassAbsTime += BAR;
-      }
-      var tid3 = setTimeout(schedBassBatch, 1800);
-      bgTimers.push(tid3);
-    }
-    schedBassBatch();
-
-    // ── CHORDS ──
-    var chordIdx = 0;
-    var chordAbsTime = bgCtx.currentTime + 0.3;
-    function schedChordBatch() {
-      if (!bgAlive || !masterGain) return;
-      var horizon = bgCtx.currentTime + 3.5;
-      while (chordAbsTime < horizon) {
-        var ch = WELL_CHORDS[chordIdx % WELL_CHORDS.length]; chordIdx++;
-        ch.forEach(function(f4, ci) {
-          try {
-            var o4 = bgCtx.createOscillator(), g4 = bgCtx.createGain();
-            o4.type = 'sine'; o4.frequency.value = f4;
-            var t4 = chordAbsTime + ci * BEAT * 0.5;
-            g4.gain.setValueAtTime(0, t4);
-            g4.gain.linearRampToValueAtTime(0.09, t4 + 0.05);
-            g4.gain.setValueAtTime(0.09, t4 + BAR * 0.5);
-            g4.gain.linearRampToValueAtTime(0, t4 + BAR * 0.8);
-            o4.connect(g4); g4.connect(masterGain);
-            o4.start(t4); o4.stop(t4 + BAR);
-          } catch(e) {}
-        });
-        chordAbsTime += BAR * 2;
-      }
-      var tid4 = setTimeout(schedChordBatch, 1800);
-      bgTimers.push(tid4);
-    }
-    schedChordBatch();
-
-    // ── PERCUSSION — shanty stomp/clap feel ──
-    var percAbsTime = bgCtx.currentTime + 0.3;
-    var beatCount = 0;
-    function schedPercBatch() {
-      if (!bgAlive || !masterGain) return;
-      var horizon = bgCtx.currentTime + 3.5;
-      while (percAbsTime < horizon) {
-        var bc = beatCount; beatCount++;
-        var t5 = percAbsTime;
-        var beat4 = bc % 4;
-
-        if (beat4 === 0 || beat4 === 2) {
-          // Kick: low sine thud
-          try {
-            var o5 = bgCtx.createOscillator(), g5 = bgCtx.createGain();
-            o5.type = 'sine';
-            o5.frequency.setValueAtTime(beat4 === 0 ? 120 : 90, t5);
-            o5.frequency.exponentialRampToValueAtTime(40, t5 + 0.1);
-            g5.gain.setValueAtTime(0, t5);
-            g5.gain.linearRampToValueAtTime(0.35, t5 + 0.005);
-            g5.gain.exponentialRampToValueAtTime(0.0001, t5 + 0.22);
-            o5.connect(g5); g5.connect(masterGain);
-            o5.start(t5); o5.stop(t5 + 0.25);
-          } catch(e) {}
-        }
-
-        if (beat4 === 1 || beat4 === 3) {
-          // Clap: filtered noise burst
-          try {
-            var sr = bgCtx.sampleRate;
-            var buf = bgCtx.createBuffer(1, Math.ceil(sr * 0.05), sr);
-            var d = buf.getChannelData(0);
-            for (var ii = 0; ii < d.length; ii++) {
-              d[ii] = (Math.random() * 2 - 1) * Math.pow(1 - ii / d.length, 1.5);
-            }
-            var src = bgCtx.createBufferSource();
-            var filt = bgCtx.createBiquadFilter();
-            var g6 = bgCtx.createGain();
-            filt.type = 'bandpass'; filt.frequency.value = 1200; filt.Q.value = 1.2;
-            g6.gain.setValueAtTime(0.22, t5);
-            g6.gain.exponentialRampToValueAtTime(0.0001, t5 + 0.06);
-            src.buffer = buf;
-            src.connect(filt); filt.connect(g6); g6.connect(masterGain);
-            src.start(t5);
-          } catch(e) {}
-        }
-
-        percAbsTime += BEAT;
-      }
-      var tid5 = setTimeout(schedPercBatch, 1800);
-      bgTimers.push(tid5);
-    }
-    schedPercBatch();
-
-  } catch(e) { bgAlive = false; }
-}
-
-function stopMusic() {
-  bgAlive = false;
-  bgTimers.forEach(function(t) { clearTimeout(t); });
-  bgTimers = [];
-  if (masterGain) {
-    try { masterGain.gain.setTargetAtTime(0, ac().currentTime, 0.3); } catch(e) {}
-    masterGain = null;
-  }
-}
-
-function toggleMusic() {
-  musicOn = !musicOn;
-  document.getElementById('btnSnd').textContent = musicOn ? '♫  МУЗЫКА: ВКЛ' : '♫  МУЗЫКА: ВЫКЛ';
-  if (!musicOn) stopMusic();
-  else { bgAlive = false; startMusic(); }
-}
 
 // ═══════════════════════════════════════════════════════
 // PARTICLES
@@ -1141,7 +877,6 @@ function goMenu(){
   document.getElementById('ovD').classList.remove('on');
   document.getElementById('ovP').classList.remove('on');
   sfxClick(); showScr('sMenu');
-  if(musicOn&&!bgAlive) startMusic();
 }
 
 // ═══════════════════════════════════════════════════════
@@ -1170,9 +905,8 @@ function setupMenu(){
 // ═══════════════════════════════════════════════════════
 // BUTTONS
 // ═══════════════════════════════════════════════════════
-document.getElementById('btnPlay').addEventListener('click',function(){sfxClick();startMusic();showScr('sGame');setTimeout(initGame,60);});
+document.getElementById('btnPlay').addEventListener('click',function(){sfxClick();showScr('sGame');setTimeout(initGame,60);});
 document.getElementById('btnRec').addEventListener('click',function(){sfxClick();showScr('sRec');renderRecs();});
-document.getElementById('btnSnd').addEventListener('click',toggleMusic);
 document.getElementById('btnRB').addEventListener('click',function(){sfxClick();showScr('sMenu');});
 document.getElementById('btnP').addEventListener('click',function(){if(!dead)setPause(!paused);});
 document.getElementById('btnRes').addEventListener('click',function(){setPause(false);});
@@ -1182,7 +916,6 @@ document.getElementById('btnDM').addEventListener('click',goMenu);
 
 // BOOT
 setupMenu();
-startMusic();
 </script>
 </body>
 </html>
