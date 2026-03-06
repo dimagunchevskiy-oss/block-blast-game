@@ -76,10 +76,32 @@ html,body{width:100%;height:100%;overflow:hidden;touch-action:none;background:#0
 .menu-best-val{font-family:'Fredoka One',cursive;font-size:28px;color:#ffd47e;line-height:1.2}
 
 .dev{
-  z-index:2;font-size:11px;color:rgba(255,255,255,.2);letter-spacing:1px;
-  text-align:center;margin-top:6px;padding-bottom:4px;
+  z-index:2;font-size:11px;color:rgba(255,255,255,.25);letter-spacing:1px;
+  text-align:center;margin-top:8px;padding-bottom:2px;
 }
-.devname{font-family:'Fredoka One',cursive;font-size:13px;color:rgba(255,212,126,.5)}
+.devname{
+  font-family:'Fredoka One',cursive;font-size:15px;
+  background:linear-gradient(90deg,#ffd47e,#ff6b6b,#a78bfa,#38bdf8,#4ade80,#ffd47e);
+  background-size:300% 100%;
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  animation:devshine 4s linear infinite;
+  letter-spacing:2px;
+}
+@keyframes devshine{0%{background-position:0% 0}100%{background-position:300% 0}}
+
+/* Menu streak badge */
+.menu-streak{
+  display:flex;align-items:center;justify-content:center;gap:6px;
+  padding:10px 0 2px;border-top:1px solid rgba(255,255,255,.07);margin-top:2px;
+}
+.menu-streak-fire{font-size:22px;line-height:1}
+.menu-streak-info{text-align:left}
+.menu-streak-lbl{font-size:9px;color:rgba(255,255,255,.3);letter-spacing:4px;text-transform:uppercase}
+.menu-streak-val{
+  font-family:'Fredoka One',cursive;font-size:26px;line-height:1.1;
+  background:linear-gradient(135deg,#fbbf24,#f43f5e);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
 
 /* ══ RECORDS ══ */
 #sRec{background:radial-gradient(ellipse at 55% 25%,#141e38,#080c18 70%)}
@@ -289,6 +311,13 @@ html,body{width:100%;height:100%;overflow:hidden;touch-action:none;background:#0
       <div class="menu-best" id="menuBest" style="display:none">
         <div class="menu-best-lbl">ВАШ РЕКОРД</div>
         <div class="menu-best-val" id="menuBestVal">0</div>
+      </div>
+      <div class="menu-streak" id="menuStreak" style="display:none">
+        <canvas id="fireCanvas" width="54" height="64" style="display:block"></canvas>
+        <div class="menu-streak-info">
+          <div class="menu-streak-lbl">МАКС СЕРИЯ</div>
+          <div class="menu-streak-val" id="menuStreakVal">0</div>
+        </div>
       </div>
     </div>
     <div class="dev">Разработчик: <span class="devname">𝕯𝕴𝕸𝕬</span></div>
@@ -659,21 +688,22 @@ function getPreviewClear() {
 
 function drawGrid() {
   var sz = CELL*GS;
-  gridPulse += 0.022;
+  gridPulse += 0.025;
 
   // bg
   GCX.fillStyle='#0b1220';
   rrect(GCX,0,0,sz,sz,16); GCX.fill();
 
-  // line clear preview — cells that will be cleared
+  // preview data
   var prev = getPreviewClear();
-  var clearMap = {};
-  prev.rows.forEach(function(r){for(var c=0;c<GS;c++) clearMap[r+','+c]=true;});
-  prev.cols.forEach(function(c){for(var r=0;r<GS;r++) clearMap[r+','+c]=true;});
-
-  // ghost cells map (where dragged piece will land)
-  var ghostMap = {};
+  var clearRowSet = {}, clearColSet = {};
+  prev.rows.forEach(function(r){ clearRowSet[r]=true; });
+  prev.cols.forEach(function(c){ clearColSet[c]=true; });
+  var hasClear = prev.rows.length>0 || prev.cols.length>0;
   var validDrop = drag.active && canPlace(drag.cells);
+
+  // ghost map
+  var ghostMap = {};
   if (validDrop) {
     drag.cells.forEach(function(cell){
       if(cell.r>=0&&cell.r<GS&&cell.c>=0&&cell.c<GS)
@@ -681,7 +711,7 @@ function drawGrid() {
     });
   }
 
-  // cells background
+  // ── 1. cell backgrounds ──
   for (var r=0;r<GS;r++) {
     for (var c=0;c<GS;c++) {
       GCX.fillStyle = (r+c)%2===0 ? 'rgba(255,255,255,.024)' : 'rgba(255,255,255,.01)';
@@ -690,66 +720,112 @@ function drawGrid() {
     }
   }
 
-  // grid lines
-  GCX.strokeStyle='rgba(255,255,255,.038)'; GCX.lineWidth=1;
+  // ── 2. GLOW LAYER for completing rows/cols ──
+  if (hasClear && validDrop) {
+    var pulse = 0.55 + 0.35*Math.sin(gridPulse*4);
+    var colHex = drag.col.f;
+
+    // Row glow — full-width bright band
+    prev.rows.forEach(function(r) {
+      // outer glow
+      GCX.save();
+      GCX.globalAlpha = pulse * 0.35;
+      var gRow = GCX.createLinearGradient(0, r*CELL, 0, (r+1)*CELL);
+      gRow.addColorStop(0, colHex);
+      gRow.addColorStop(0.5, '#ffffff');
+      gRow.addColorStop(1, colHex);
+      GCX.fillStyle = gRow;
+      GCX.fillRect(0, r*CELL - 3, sz, CELL + 6);
+      GCX.restore();
+
+      // sharp bright stripe
+      GCX.save();
+      GCX.globalAlpha = pulse * 0.9;
+      var gStripe = GCX.createLinearGradient(0, r*CELL, 0, (r+1)*CELL);
+      gStripe.addColorStop(0,   colHex+'cc');
+      gStripe.addColorStop(0.3, '#ffffff');
+      gStripe.addColorStop(0.7, '#ffffff');
+      gStripe.addColorStop(1,   colHex+'cc');
+      GCX.fillStyle = gStripe;
+      GCX.fillRect(2, r*CELL+2, sz-4, CELL-4);
+      GCX.restore();
+
+      // bright border lines top+bottom
+      GCX.save();
+      GCX.globalAlpha = pulse;
+      GCX.strokeStyle = colHex;
+      GCX.lineWidth = 2;
+      GCX.shadowColor = colHex;
+      GCX.shadowBlur = 12;
+      GCX.beginPath(); GCX.moveTo(2, r*CELL+1); GCX.lineTo(sz-2, r*CELL+1); GCX.stroke();
+      GCX.beginPath(); GCX.moveTo(2, (r+1)*CELL-1); GCX.lineTo(sz-2, (r+1)*CELL-1); GCX.stroke();
+      GCX.shadowBlur = 0;
+      GCX.restore();
+    });
+
+    // Col glow — full-height bright band
+    prev.cols.forEach(function(c) {
+      GCX.save();
+      GCX.globalAlpha = pulse * 0.35;
+      var gCol = GCX.createLinearGradient(c*CELL, 0, (c+1)*CELL, 0);
+      gCol.addColorStop(0, colHex);
+      gCol.addColorStop(0.5, '#ffffff');
+      gCol.addColorStop(1, colHex);
+      GCX.fillStyle = gCol;
+      GCX.fillRect(c*CELL-3, 0, CELL+6, sz);
+      GCX.restore();
+
+      GCX.save();
+      GCX.globalAlpha = pulse * 0.9;
+      var gColS = GCX.createLinearGradient(c*CELL, 0, (c+1)*CELL, 0);
+      gColS.addColorStop(0,   colHex+'cc');
+      gColS.addColorStop(0.3, '#ffffff');
+      gColS.addColorStop(0.7, '#ffffff');
+      gColS.addColorStop(1,   colHex+'cc');
+      GCX.fillStyle = gColS;
+      GCX.fillRect(c*CELL+2, 2, CELL-4, sz-4);
+      GCX.restore();
+
+      GCX.save();
+      GCX.globalAlpha = pulse;
+      GCX.strokeStyle = colHex;
+      GCX.lineWidth = 2;
+      GCX.shadowColor = colHex;
+      GCX.shadowBlur = 12;
+      GCX.beginPath(); GCX.moveTo(c*CELL+1, 2); GCX.lineTo(c*CELL+1, sz-2); GCX.stroke();
+      GCX.beginPath(); GCX.moveTo((c+1)*CELL-1, 2); GCX.lineTo((c+1)*CELL-1, sz-2); GCX.stroke();
+      GCX.shadowBlur = 0;
+      GCX.restore();
+    });
+  }
+
+  // ── 3. grid lines (on top of glow, before blocks) ──
+  GCX.strokeStyle='rgba(255,255,255,.04)'; GCX.lineWidth=1;
   for (var i=0;i<=GS;i++) {
     GCX.beginPath(); GCX.moveTo(i*CELL,0); GCX.lineTo(i*CELL,sz); GCX.stroke();
     GCX.beginPath(); GCX.moveTo(0,i*CELL); GCX.lineTo(sz,i*CELL); GCX.stroke();
   }
 
-  // placed blocks
+  // ── 4. placed blocks ──
   for (var rr=0;rr<GS;rr++)
     for (var cc=0;cc<GS;cc++)
       if (grid[rr][cc]) drawBlock(GCX, cc*CELL, rr*CELL, grid[rr][cc], CELL);
 
-  // ghost: draw actual colored blocks (semi-transparent) + clear line highlight
+  // ── 5. ghost piece ──
   if (drag.active) {
     if (validDrop) {
       drag.cells.forEach(function(cell) {
         if (cell.r<0||cell.r>=GS||cell.c<0||cell.c>=GS) return;
-        var key = cell.r+','+cell.c;
-        var isClear = clearMap[key];
-        // draw piece block semi-transparent
+        var onClearLine = clearRowSet[cell.r] || clearColSet[cell.c];
         GCX.save();
-        GCX.globalAlpha = isClear ? 0.92 : 0.62;
+        GCX.globalAlpha = onClearLine ? 1.0 : 0.60;
         drawBlock(GCX, cell.c*CELL, cell.r*CELL, drag.col, CELL);
         GCX.restore();
-        // if this cell completes a line, draw bright border
-        if (isClear) {
-          GCX.strokeStyle = '#fff';
-          GCX.lineWidth = 2.5;
-          GCX.globalAlpha = 0.7 + 0.2*Math.sin(gridPulse*5);
-          rrect(GCX, cell.c*CELL+2, cell.r*CELL+2, CELL-4, CELL-4, Math.max(0,CELL*.18));
-          GCX.stroke();
-          GCX.globalAlpha = 1;
-        }
-      });
-      // highlight entire rows/cols that will clear — overlay on non-ghost cells too
-      prev.rows.forEach(function(r){
-        for(var c=0;c<GS;c++){
-          if(ghostMap[r+','+c]) continue; // already drawn as ghost block
-          GCX.globalAlpha = 0.18 + 0.08*Math.sin(gridPulse*5 + c*0.3);
-          GCX.fillStyle = drag.col.f;
-          rrect(GCX, c*CELL+1.5, r*CELL+1.5, CELL-3, CELL-3, 4);
-          GCX.fill();
-          GCX.globalAlpha = 1;
-        }
-      });
-      prev.cols.forEach(function(c){
-        for(var r=0;r<GS;r++){
-          if(ghostMap[r+','+c]) continue;
-          GCX.globalAlpha = 0.18 + 0.08*Math.sin(gridPulse*5 + r*0.3);
-          GCX.fillStyle = drag.col.f;
-          rrect(GCX, c*CELL+1.5, r*CELL+1.5, CELL-3, CELL-3, 4);
-          GCX.fill();
-          GCX.globalAlpha = 1;
-        }
       });
     } else {
-      // invalid placement — red tint
       drag.cells.forEach(function(cell) {
         if (cell.r<0||cell.r>=GS||cell.c<0||cell.c>=GS) return;
-        GCX.fillStyle = 'rgba(255,50,50,.22)';
+        GCX.fillStyle='rgba(255,50,50,.22)';
         rrect(GCX,cell.c*CELL+1.5,cell.r*CELL+1.5,CELL-3,CELL-3,Math.max(0,CELL*.2));
         GCX.fill();
       });
@@ -1077,6 +1153,7 @@ function fitsAnywhere(cells) {
 function doDead() {
   dead=true;
   sfxDead(); haptic('dead');
+  saveBestStreak(maxCombo);
   var isNew=saveRec(score);
   if(isNew&&score>0) setTimeout(sfxNewBest,900);
   document.getElementById('ovSc').textContent=score.toLocaleString();
@@ -1113,6 +1190,8 @@ function saveRec(s){
   return r[0].score===s;
 }
 function getBest(){var r=getRecs();return r.length?r[0].score:0;}
+function getBestStreak(){try{return parseInt(localStorage.getItem('bb7s')||'0');}catch(e){return 0;}}
+function saveBestStreak(s){try{if(s>getBestStreak())localStorage.setItem('bb7s',String(s));}catch(e){}}
 function renderRecs(){
   var l=document.getElementById('rlist'),r=getRecs();
   if(!r.length){l.innerHTML='<div class="no-rec">Пока нет рекордов.<br>Сыграй первую игру!</div>';return;}
@@ -1204,6 +1283,138 @@ function goMenu(){
 // ══════════════════════════════════════════════════════════
 // MENU — animated canvas with real pieces
 // ══════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════
+// FIRE CANVAS ENGINE
+// ══════════════════════════════════════════════════════════
+var fireRaf = null, fireParticles = [], fireStreakLevel = 2;
+
+// Color palettes per streak level
+var FIRE_PALETTES = [
+  // x2-3: classic orange fire
+  ['#ff8c00','#ffa500','#ffcc00','#fff5a0'],
+  // x4-5: hot orange-red
+  ['#ff4500','#ff6b00','#ffa500','#ffdf00'],
+  // x6-7: intense red-crimson
+  ['#ff0000','#ff3c00','#ff6b00','#ffaa00'],
+  // x8+: legendary purple inferno
+  ['#9b00ff','#e500ff','#ff0066','#ff6b00','#ffcc00'],
+];
+
+function fireColor(level, t) {
+  var p = FIRE_PALETTES[Math.min(level, FIRE_PALETTES.length-1)];
+  var i = Math.floor(t * (p.length-1));
+  var f = t * (p.length-1) - i;
+  var c1 = p[Math.min(i, p.length-1)];
+  var c2 = p[Math.min(i+1, p.length-1)];
+  // parse and lerp
+  function hex(s){return[parseInt(s.slice(1,3),16),parseInt(s.slice(3,5),16),parseInt(s.slice(5,7),16)];}
+  var a=hex(c1), b=hex(c2);
+  var r=Math.round(a[0]+(b[0]-a[0])*f);
+  var g=Math.round(a[1]+(b[1]-a[1])*f);
+  var bv=Math.round(a[2]+(b[2]-a[2])*f);
+  return 'rgb('+r+','+g+','+bv+')';
+}
+
+function spawnFireParticle(cv, level) {
+  var cx = cv.width/2 + (Math.random()-0.5)*cv.width*0.35;
+  var baseSpeed = 1.2 + level*0.18;
+  var spread   = 0.6 + level*0.08;
+  return {
+    x: cx,
+    y: cv.height - 4,
+    vx: (Math.random()-0.5) * spread,
+    vy: -(baseSpeed + Math.random()*1.4),
+    life: 1,
+    decay: 0.016 + Math.random()*0.018 - level*0.001,
+    size: 3 + Math.random()*5 + level*0.4,
+    wobble: (Math.random()-0.5)*0.12,
+  };
+}
+
+function startFireCanvas(level) {
+  stopFireCanvas();
+  fireStreakLevel = Math.min(level, 8) - 2; // 0..6
+  var cv = document.getElementById('fireCanvas');
+  if(!cv) return;
+
+  // size scales with level
+  var sz = Math.min(38 + level*4, 70);
+  cv.width  = sz;
+  cv.height = Math.round(sz * 1.25);
+  cv.style.width  = cv.width  + 'px';
+  cv.style.height = cv.height + 'px';
+
+  var ctx = cv.getContext('2d');
+  fireParticles = [];
+
+  // spawn rate: more particles = bigger/wilder fire
+  var spawnRate = 1 + Math.floor(level * 0.7); // 1-8 per frame
+
+  (function tick() {
+    ctx.clearRect(0, 0, cv.width, cv.height);
+
+    // spawn
+    for(var s=0; s<spawnRate; s++) fireParticles.push(spawnFireParticle(cv, fireStreakLevel));
+
+    // cap
+    if(fireParticles.length > 220) fireParticles.splice(0, fireParticles.length-220);
+
+    // update + draw
+    ctx.save();
+    fireParticles = fireParticles.filter(function(p) {
+      p.x  += p.vx + p.wobble;
+      p.y  += p.vy;
+      p.vx += (Math.random()-0.5)*0.06;
+      p.vy += 0.04; // slight gravity (rises slower over time)
+      p.life -= p.decay;
+      if(p.life <= 0) return false;
+
+      // color: base→tip = dark→bright (t=0 at bottom)
+      var t = 1 - p.life;
+      var col = fireColor(fireStreakLevel, t);
+
+      ctx.globalAlpha = p.life * p.life * 0.95;
+
+      // glow for high levels
+      if(fireStreakLevel >= 2) {
+        ctx.shadowColor = col;
+        ctx.shadowBlur  = 6 + fireStreakLevel * 3;
+      }
+
+      // draw teardrop/blob shape
+      var r = Math.max(0.5, p.size * p.life);
+      ctx.fillStyle = col;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, r, 0, Math.PI*2);
+      ctx.fill();
+
+      // bright hot core at high levels
+      if(fireStreakLevel >= 1 && p.life > 0.6) {
+        ctx.shadowBlur = 0;
+        ctx.fillStyle = p.life > 0.8 ? '#ffffff' : '#ffffa0';
+        ctx.globalAlpha = (p.life - 0.6) * 1.8;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, r*0.35, 0, Math.PI*2);
+        ctx.fill();
+      }
+
+      ctx.shadowBlur = 0;
+      return true;
+    });
+    ctx.restore();
+    ctx.globalAlpha = 1;
+
+    fireRaf = requestAnimationFrame(tick);
+  })();
+}
+
+function stopFireCanvas() {
+  if(fireRaf){ cancelAnimationFrame(fireRaf); fireRaf=null; }
+  fireParticles = [];
+  var cv = document.getElementById('fireCanvas');
+  if(cv) cv.getContext('2d').clearRect(0,0,cv.width,cv.height);
+}
+
 var menuRaf=null, menuPieces=[];
 var MS=14;
 var MENU_SHAPES=[
@@ -1244,13 +1455,36 @@ function spawnMP(mw,mh){
     alpha:0,tAlpha:.65+Math.random()*.25,fadeIn:true};
 }
 function setupMenu(){
-  // show best score if exists
+  // show best score
   var b=getBest();
   var mb=document.getElementById('menuBest');
-  if(b>0){
-    mb.style.display='block';
-    document.getElementById('menuBestVal').textContent=b.toLocaleString();
-  } else { mb.style.display='none'; }
+  if(b>0){mb.style.display='block';document.getElementById('menuBestVal').textContent=b.toLocaleString();}
+  else mb.style.display='none';
+
+  // show best streak with escalating fire
+  var bs=getBestStreak();
+  var ms=document.getElementById('menuStreak');
+  if(bs>=2){
+    ms.style.display='flex';
+    document.getElementById('menuStreakVal').textContent='x'+bs;
+
+    // gradient on value text scales with level
+    var gradients=[
+      'linear-gradient(135deg,#fbbf24,#f59e0b)',
+      'linear-gradient(135deg,#f97316,#ea580c)',
+      'linear-gradient(135deg,#f43f5e,#be123c)',
+      'linear-gradient(135deg,#a855f7,#f43f5e,#fbbf24)',
+    ];
+    var gi = bs>=8?3:bs>=6?2:bs>=4?1:0;
+    var sv=document.getElementById('menuStreakVal');
+    sv.style.background=gradients[gi];
+    sv.style['-webkit-background-clip']='text';
+    sv.style['-webkit-text-fill-color']='transparent';
+    sv.style['background-clip']='text';
+    sv.style.fontSize=Math.min(26+bs*2,44)+'px';
+
+    startFireCanvas(bs);
+  } else { ms.style.display='none'; stopFireCanvas(); }
 
   var fbg=document.getElementById('fbg'); fbg.innerHTML='';
   COLS.forEach(function(col){
@@ -1300,6 +1534,7 @@ function setupMenu(){
 document.getElementById('btnPlay').addEventListener('click',function(){
   sfxClick();
   if(menuRaf){cancelAnimationFrame(menuRaf);menuRaf=null;}
+  stopFireCanvas();
   showScr('sGame'); setTimeout(initGame,60);
 });
 document.getElementById('btnRec').addEventListener('click',function(){sfxClick();showScr('sRec');renderRecs();});
