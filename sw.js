@@ -1,6 +1,6 @@
 // Блок Бласт — Service Worker
 // Версию меняй при каждом обновлении игры
-const CACHE = 'blokblast-v1';
+const CACHE = 'blokblast-v2';
 const ASSETS = [
   './',
   './index.html',
