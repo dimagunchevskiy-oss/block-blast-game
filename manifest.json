@@ -1,7 +1,7 @@
 {
   "name": "Блок Бласт",
   "short_name": "Блок Бласт",
-  "description": "Аддиктивная головоломка — собирай линии из блоков",
+  "description": "Бесконечная головоломка — собирай линии из блоков",
   "start_url": "./index.html",
   "display": "standalone",
   "orientation": "portrait",
