@@ -297,13 +297,134 @@ html,body{width:100%;height:100%;overflow:hidden;touch-action:none;background:#0
 .lfl{position:absolute;pointer-events:none;z-index:14;animation:lfa .45s ease forwards}
 @keyframes lfa{0%{opacity:1}100%{opacity:0;transform:scale(1.02)}}
 
-/* ══ MISC ══ */
+/* ══ SPLASH ══ */
+#sSplash{
+  position:fixed;inset:0;z-index:9999;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  background:radial-gradient(ellipse at 40% 35%,#1a1040 0%,#080c18 70%);
+  transition:opacity .6s ease;
+}
+#sSplash.out{opacity:0;pointer-events:none;}
+.splash-logo{
+  font-family:'Fredoka One',cursive;font-size:clamp(52px,16vw,88px);
+  background:linear-gradient(135deg,#ffd47e 0%,#ff6b6b 45%,#a78bfa 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  letter-spacing:5px;padding-left:5px;line-height:1.1;
+  animation:splashpop .7s cubic-bezier(.175,.885,.32,1.275) both;
+}
+@keyframes splashpop{0%{transform:scale(.4);opacity:0}100%{transform:scale(1);opacity:1}}
+.splash-sub{
+  font-family:'Fredoka One',cursive;font-size:13px;letter-spacing:5px;
+  color:rgba(255,255,255,.3);margin-top:6px;text-transform:uppercase;
+  animation:fadein .5s .4s ease both;
+}
+.splash-bar-wrap{
+  width:160px;height:4px;background:rgba(255,255,255,.1);border-radius:4px;
+  margin-top:40px;overflow:hidden;animation:fadein .3s .6s ease both;
+}
+.splash-bar{
+  height:100%;width:0%;border-radius:4px;
+  background:linear-gradient(90deg,#a78bfa,#ff6b6b,#ffd47e);
+  transition:width .05s linear;
+}
+@keyframes fadein{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* ══ STATS SCREEN ══ */
+#sStat{background:radial-gradient(ellipse at 40% 20%,#141e38,#080c18 70%)}
+.stat-title{
+  font-family:'Fredoka One',cursive;font-size:32px;
+  background:linear-gradient(135deg,#a78bfa,#38bdf8);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  background-clip:text;margin-bottom:18px;
+}
+.stat-grid{
+  display:grid;grid-template-columns:1fr 1fr;gap:10px;
+  width:min(90vw,340px);margin-bottom:18px;
+}
+.stat-card{
+  background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);
+  border-radius:18px;padding:14px 12px;text-align:center;
+  animation:slin .3s ease both;
+}
+.stat-card-ico{font-size:24px;margin-bottom:4px}
+.stat-card-lbl{font-size:9px;color:rgba(255,255,255,.3);letter-spacing:3px;text-transform:uppercase;margin-bottom:4px}
+.stat-card-val{font-family:'Fredoka One',cursive;font-size:26px;color:#fff}
+.stat-card-val.gold{color:#ffd47e}
+.stat-card-val.blue{color:#38bdf8}
+.stat-card-val.purple{color:#a78bfa}
+.stat-card-val.red{
+  background:linear-gradient(135deg,#fbbf24,#f43f5e);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+
+/* ══ SHARE CARD ══ */
+#shareOverlay{
+  position:fixed;inset:0;background:rgba(4,7,18,.92);backdrop-filter:blur(16px);
+  display:flex;align-items:center;justify-content:center;z-index:800;
+  opacity:0;pointer-events:none;transition:opacity .3s;
+}
+#shareOverlay.on{opacity:1;pointer-events:all}
+.share-wrap{display:flex;flex-direction:column;align-items:center;gap:14px}
+#shareCard{
+  width:300px;border-radius:24px;overflow:hidden;
+  box-shadow:0 28px 70px rgba(0,0,0,.8);
+}
+.share-actions{display:flex;gap:10px}
+.share-btn{
+  padding:12px 22px;border:none;border-radius:14px;
+  font-family:'Fredoka One',cursive;font-size:17px;color:#fff;cursor:pointer;
+  transition:transform .1s,filter .1s;
+}
+.share-btn:active{transform:scale(.96);filter:brightness(.88)}
+.share-btn-dl{background:linear-gradient(145deg,#4f46e5,#7c3aed);box-shadow:0 4px 0 #2e1065}
+.share-btn-cl{background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.12)}
+
+/* ══ FLYING SCORE ══ */
+.score-fly{
+  position:fixed;pointer-events:none;z-index:260;
+  font-family:'Fredoka One',cursive;font-size:18px;color:#ffd47e;
+  text-shadow:0 2px 8px rgba(0,0,0,.7);
+  transition:none;
+}
+
+/* ══ PIECE SPAWN ANIMATION ══ */
+@keyframes pieceIn{
+  0%{transform:translateY(40px) scale(.7);opacity:0}
+  70%{transform:translateY(-4px) scale(1.05);opacity:1}
+  100%{transform:translateY(0) scale(1);opacity:1}
+}
+.pslot.spawning{animation:pieceIn .38s cubic-bezier(.175,.885,.32,1.275) both}
 .rlist::-webkit-scrollbar{width:3px}
 .rlist::-webkit-scrollbar-track{background:transparent}
 .rlist::-webkit-scrollbar-thumb{background:rgba(255,255,255,.13);border-radius:2px}
 </style>
 </head>
 <body>
+<!-- SPLASH -->
+<div id="sSplash">
+  <div class="splash-logo">БЛОК БЛАСТ</div>
+  <div class="splash-sub">головоломка с блоками</div>
+  <div class="splash-bar-wrap"><div class="splash-bar" id="splashBar"></div></div>
+</div>
+
+<!-- SHARE OVERLAY -->
+<div id="shareOverlay">
+  <div class="share-wrap">
+    <canvas id="shareCard" width="300" height="360"></canvas>
+    <div class="share-actions">
+      <button class="share-btn share-btn-dl" id="btnShareDl">📥 Сохранить</button>
+      <button class="share-btn share-btn-cl" id="btnShareCl">✕ Закрыть</button>
+    </div>
+  </div>
+</div>
+
+<!-- STATS SCREEN -->
+<div class="scr off" id="sStat">
+  <div class="stat-title">📊 СТАТИСТИКА</div>
+  <div class="stat-grid" id="statGrid"></div>
+  <button class="mbtn mbtn-r" id="btnStatB">← НАЗАД</button>
+</div>
+
 <canvas id="pc"></canvas>
 <canvas id="dg"></canvas>
 
@@ -318,6 +439,7 @@ html,body{width:100%;height:100%;overflow:hidden;touch-action:none;background:#0
     <div class="menu-card">
       <button class="mbtn mbtn-p" id="btnPlay">▶ &nbsp;ИГРАТЬ</button>
       <button class="mbtn mbtn-r" id="btnRec">🏆 &nbsp;РЕКОРДЫ</button>
+      <button class="mbtn" style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1)" id="btnStat">📊 &nbsp;СТАТИСТИКА</button>
       <div class="menu-best" id="menuBest" style="display:none">
         <div class="menu-best-lbl">ВАШ РЕКОРД</div>
         <div class="menu-best-val" id="menuBestVal">0</div>
@@ -400,6 +522,7 @@ html,body{width:100%;height:100%;overflow:hidden;touch-action:none;background:#0
       </div>
     </div>
     <button class="ovbtn ovbtn-r" id="btnRst">🔄 ИГРАТЬ СНОВА</button>
+    <button class="ovbtn" style="background:linear-gradient(145deg,#4f46e5,#7c3aed);box-shadow:0 5px 0 #2e1065" id="btnShare">📤 ПОДЕЛИТЬСЯ</button>
     <button class="ovbtn ovbtn-m" id="btnDM">МЕНЮ</button>
   </div>
 </div>
@@ -904,7 +1027,18 @@ function spawnPieces() {
       used:false
     };
   }
-  requestAnimationFrame(function(){ requestAnimationFrame(renderAllPieces); });
+  requestAnimationFrame(function(){ requestAnimationFrame(function(){
+    renderAllPieces();
+    // animate each slot flying in from bottom with stagger
+    [0,1,2].forEach(function(i){
+      var slot=document.getElementById('ps'+i);
+      slot.classList.remove('spawning');
+      void slot.offsetWidth; // force reflow
+      slot.style.animationDelay=(i*0.08)+'s';
+      slot.classList.add('spawning');
+      setTimeout(function(){ slot.classList.remove('spawning'); slot.style.animationDelay=''; },500);
+    });
+  }); });
 }
 
 // ══════════════════════════════════════════════════════════
@@ -1120,16 +1254,46 @@ function updateStreakUI() {
 }
 
 function showFS(pts, rows, cols) {
-  var el=document.createElement('div'); el.className='fs';
-  el.textContent='+'+pts.toLocaleString();
   var total=(rows?rows.length:0)+(cols?cols.length:0);
-  var col = total>=3 ? '#e879f9' : total>=2 ? '#38bdf8' : '#ffd47e';
-  el.style.color=col;
-  el.style.fontSize=(20+total*4)+'px';
+  var col = total>=3?'#e879f9':total>=2?'#38bdf8':'#ffd47e';
+  var sz  = 18+total*5;
+
+  // Create floating label at grid center
   var cr=GC.getBoundingClientRect();
-  el.style.left=(cr.left+cr.width/2-40)+'px';
-  el.style.top=(cr.top+cr.height*0.25)+'px';
-  document.body.appendChild(el); setTimeout(function(){el.remove();},950);
+  var startX=cr.left+cr.width/2-24;
+  var startY=cr.top+cr.height*0.22;
+
+  var el=document.createElement('div');
+  el.className='score-fly';
+  el.textContent='+'+pts.toLocaleString();
+  el.style.cssText='left:'+startX+'px;top:'+startY+'px;font-size:'+sz+'px;color:'+col+
+    ';opacity:1;transform:translateY(0) scale(1);transition:none;';
+  document.body.appendChild(el);
+
+  // Target: score HUD box
+  var scoreBox=document.getElementById('gsc');
+  var tRect=scoreBox.getBoundingClientRect();
+  var tx=tRect.left+tRect.width/2-24;
+  var ty=tRect.top;
+
+  // Animate: brief pause, then fly up to HUD
+  var start=null, dur=700;
+  requestAnimationFrame(function step(ts){
+    if(!start) start=ts;
+    var prog=Math.min((ts-start)/dur,1);
+    // ease-in curve
+    var e=prog<0.2?0:((prog-0.2)/0.8);
+    var ease=1-Math.pow(1-e,3);
+    var cx=startX+(tx-startX)*ease;
+    var cy=startY+(ty-startY)*ease;
+    var sc=1-ease*0.55;
+    el.style.left=cx+'px';
+    el.style.top=cy+'px';
+    el.style.transform='scale('+sc+')';
+    el.style.opacity=prog<0.15?1:(1-(prog-0.15)/0.85);
+    if(prog<1) requestAnimationFrame(step);
+    else el.remove();
+  });
 }
 function showComboPop(c) {
   var el=document.createElement('div'); el.className='cpop';
@@ -1164,6 +1328,7 @@ function doDead() {
   dead=true;
   sfxDead(); haptic('dead');
   saveBestStreak(maxCombo);
+  recordGameStat(score, totalLines, maxCombo);
   var isNew=saveRec(score);
   if(isNew&&score>0) setTimeout(sfxNewBest,900);
   document.getElementById('ovSc').textContent=score.toLocaleString();
@@ -1202,6 +1367,41 @@ function saveRec(s){
 function getBest(){var r=getRecs();return r.length?r[0].score:0;}
 function getBestStreak(){try{return parseInt(localStorage.getItem('bb7s')||'0');}catch(e){return 0;}}
 function saveBestStreak(s){try{if(s>getBestStreak())localStorage.setItem('bb7s',String(s));}catch(e){}}
+
+// ── Stats ──
+function getStats(){
+  try{return JSON.parse(localStorage.getItem('bb7st')||'{}');}catch(e){return{};}
+}
+function saveStats(st){try{localStorage.setItem('bb7st',JSON.stringify(st));}catch(e){}}
+function recordGameStat(sc,lines,maxC){
+  var st=getStats();
+  st.games=(st.games||0)+1;
+  st.totalScore=(st.totalScore||0)+sc;
+  st.totalLines=(st.totalLines||0)+lines;
+  if(!st.bestScore||sc>st.bestScore) st.bestScore=sc;
+  if(!st.bestCombo||maxC>st.bestCombo) st.bestCombo=maxC;
+  saveStats(st);
+}
+function renderStats(){
+  var st=getStats();
+  var g=st.games||0;
+  var avg=g>0?Math.round((st.totalScore||0)/g):0;
+  var el=document.getElementById('statGrid');
+  var cards=[
+    {ico:'🎮',lbl:'Всего партий',val:g,cls:''},
+    {ico:'🏆',lbl:'Рекорд',val:(st.bestScore||0).toLocaleString(),cls:'gold'},
+    {ico:'📈',lbl:'Среднее',val:avg.toLocaleString(),cls:'blue'},
+    {ico:'🔥',lbl:'Лучшая серия',val:'x'+(getBestStreak()||0),cls:'red'},
+    {ico:'💎',lbl:'Лучшее комбо',val:'x'+(st.bestCombo||0),cls:'purple'},
+    {ico:'📦',lbl:'Всего линий',val:(st.totalLines||0).toLocaleString(),cls:''},
+  ];
+  el.innerHTML=cards.map(function(c,i){
+    return '<div class="stat-card" style="animation-delay:'+(i*.06)+'s">'+
+      '<div class="stat-card-ico">'+c.ico+'</div>'+
+      '<div class="stat-card-lbl">'+c.lbl+'</div>'+
+      '<div class="stat-card-val '+c.cls+'">'+c.val+'</div></div>';
+  }).join('');
+}
 function renderRecs(){
   var l=document.getElementById('rlist'),r=getRecs();
   if(!r.length){l.innerHTML='<div class="no-rec">Пока нет рекордов.<br>Сыграй первую игру!</div>';return;}
@@ -1276,7 +1476,7 @@ window.addEventListener('touchcancel',function(){if(drag.active){DG.style.displa
 // SCREENS
 // ══════════════════════════════════════════════════════════
 function showScr(id){
-  ['sMenu','sRec','sGame'].forEach(function(s){
+  ['sMenu','sRec','sGame','sStat'].forEach(function(s){
     document.getElementById(s).classList.toggle('off',s!==id);
   });
 }
@@ -1288,6 +1488,136 @@ function goMenu(){
   document.getElementById('ovP').classList.remove('on');
   sfxClick(); showScr('sMenu');
   setupMenu();
+}
+
+// ══════════════════════════════════════════════════════════
+// SPLASH SCREEN
+// ══════════════════════════════════════════════════════════
+function runSplash(cb) {
+  var bar=document.getElementById('splashBar');
+  var sp=document.getElementById('sSplash');
+  var pct=0;
+  var iv=setInterval(function(){
+    pct=Math.min(pct+(4+Math.random()*8),100);
+    bar.style.width=pct+'%';
+    if(pct>=100){
+      clearInterval(iv);
+      setTimeout(function(){
+        sp.classList.add('out');
+        setTimeout(function(){sp.style.display='none';cb();},650);
+      },200);
+    }
+  },40);
+}
+
+// ══════════════════════════════════════════════════════════
+// SHARE CARD
+// ══════════════════════════════════════════════════════════
+function drawShareCard(sc,lines,maxC,isNew){
+  var cv=document.getElementById('shareCard');
+  var ctx=cv.getContext('2d');
+  var W=cv.width,H=cv.height;
+
+  // background
+  var bg=ctx.createLinearGradient(0,0,W,H);
+  bg.addColorStop(0,'#0f0a2e');
+  bg.addColorStop(0.5,'#1a0a28');
+  bg.addColorStop(1,'#0a1020');
+  ctx.fillStyle=bg; ctx.fillRect(0,0,W,H);
+
+  // glow blobs
+  [[0.2,0.2,'rgba(167,139,250,.35)'],[0.8,0.7,'rgba(244,63,94,.3)'],[0.5,0.5,'rgba(56,189,248,.15)']].forEach(function(g){
+    var gr=ctx.createRadialGradient(g[0]*W,g[1]*H,0,g[0]*W,g[1]*H,W*0.55);
+    gr.addColorStop(0,g[2]); gr.addColorStop(1,'transparent');
+    ctx.fillStyle=gr; ctx.fillRect(0,0,W,H);
+  });
+
+  // logo
+  ctx.font='bold 18px "Fredoka One",sans-serif';
+  ctx.letterSpacing='3px';
+  var lg=ctx.createLinearGradient(0,0,W,0);
+  lg.addColorStop(0,'#ffd47e'); lg.addColorStop(0.5,'#ff6b6b'); lg.addColorStop(1,'#a78bfa');
+  ctx.fillStyle=lg;
+  ctx.textAlign='center';
+  ctx.fillText('БЛОК БЛАСТ',W/2,38);
+
+  // divider
+  var dv=ctx.createLinearGradient(40,0,W-40,0);
+  dv.addColorStop(0,'transparent'); dv.addColorStop(0.5,'rgba(255,255,255,.25)'); dv.addColorStop(1,'transparent');
+  ctx.strokeStyle=dv; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(30,52); ctx.lineTo(W-30,52); ctx.stroke();
+
+  // NEW RECORD badge
+  if(isNew){
+    ctx.save();
+    var br=ctx.createLinearGradient(80,60,220,80);
+    br.addColorStop(0,'#ffd700'); br.addColorStop(1,'#f43f5e');
+    ctx.fillStyle=br;
+    ctx.roundRect(W/2-70,62,140,28,14);
+    ctx.fill();
+    ctx.fillStyle='#fff';
+    ctx.font='bold 13px "Fredoka One",sans-serif';
+    ctx.fillText('✨ НОВЫЙ РЕКОРД ✨',W/2,81);
+    ctx.restore();
+  }
+
+  // score
+  var sy=isNew?130:110;
+  ctx.fillStyle='rgba(255,255,255,.35)';
+  ctx.font='12px "Fredoka One",sans-serif';
+  ctx.letterSpacing='4px';
+  ctx.fillText('ФИНАЛЬНЫЙ СЧЁТ',W/2,sy-16);
+  var sg=ctx.createLinearGradient(0,sy-10,0,sy+40);
+  sg.addColorStop(0,'#fff'); sg.addColorStop(1,'#ffd47e');
+  ctx.fillStyle=sg;
+  ctx.font='bold '+(sc>=100000?52:56)+'px "Fredoka One",sans-serif';
+  ctx.letterSpacing='2px';
+  ctx.fillText(sc.toLocaleString(),W/2,sy+36);
+
+  // mini stats
+  var stats=[
+    {lbl:'ЛИНИЙ',val:lines},
+    {lbl:'СЕРИЯ',val:'x'+maxC},
+  ];
+  var bx=W/2-65, by=sy+60, bw=60, bh=52;
+  stats.forEach(function(s,i){
+    var bx2=bx+i*(bw+10);
+    ctx.fillStyle='rgba(255,255,255,.07)';
+    ctx.roundRect(bx2,by,bw,bh,10);
+    ctx.fill();
+    ctx.strokeStyle='rgba(255,255,255,.12)';
+    ctx.lineWidth=1;
+    ctx.roundRect(bx2,by,bw,bh,10);
+    ctx.stroke();
+    ctx.fillStyle='rgba(255,255,255,.35)';
+    ctx.font='8px sans-serif';
+    ctx.letterSpacing='2px';
+    ctx.fillText(s.lbl,bx2+bw/2,by+16);
+    ctx.fillStyle='#fff';
+    ctx.font='bold 20px "Fredoka One",sans-serif';
+    ctx.letterSpacing='1px';
+    ctx.fillText(s.val,bx2+bw/2,by+40);
+  });
+
+  // decorative mini blocks
+  var blockCols=[{f:'#ff6b6b',sh:'#ffaaaa',sd:'#991a1a'},{f:'#ffd47e',sh:'#ffe8b8',sd:'#a06010'},{f:'#4ade80',sh:'#a7f3c0',sd:'#166534'},{f:'#818cf8',sh:'#c4c9ff',sd:'#3730a3'}];
+  var bsz=14, gap=4;
+  var startBX=(W-(4*bsz+3*gap))/2;
+  blockCols.forEach(function(c,i){
+    drawBlock(ctx,startBX+i*(bsz+gap),H-60,c,bsz);
+    drawBlock(ctx,startBX+i*(bsz+gap),H-60+bsz+2,blockCols[(i+2)%4],bsz);
+  });
+
+  // footer
+  ctx.fillStyle='rgba(255,255,255,.22)';
+  ctx.font='10px sans-serif'; ctx.letterSpacing='1px';
+  ctx.fillText('Блок Бласт • by 𝕯𝕴𝕸𝕬',W/2,H-14);
+}
+
+function openShareCard(){
+  var isNew=document.getElementById('nrb').style.display!=='none';
+  drawShareCard(score,totalLines,maxCombo,isNew);
+  document.getElementById('shareOverlay').classList.add('on');
 }
 
 // ══════════════════════════════════════════════════════════
@@ -1544,9 +1874,22 @@ document.getElementById('btnRst').addEventListener('click',function(){
 document.getElementById('btnDM').addEventListener('click',goMenu);
 
 // ══════════════════════════════════════════════════════════
-// BOOT + SAVE HOOKS
+document.getElementById('btnStat').addEventListener('click',function(){sfxClick();showScr('sStat');renderStats();});
+document.getElementById('btnStatB').addEventListener('click',function(){sfxClick();showScr('sMenu');});
+document.getElementById('btnShare').addEventListener('click',function(){sfxClick();openShareCard();});
+document.getElementById('btnShareDl').addEventListener('click',function(){
+  var cv=document.getElementById('shareCard');
+  var a=document.createElement('a');
+  a.download='блок-бласт-'+score+'.png';
+  a.href=cv.toDataURL('image/png');
+  a.click();
+});
+document.getElementById('btnShareCl').addEventListener('click',function(){
+  document.getElementById('shareOverlay').classList.remove('on');
+});
 // ══════════════════════════════════════════════════════════
-setupMenu();
+// BOOT
+runSplash(function(){ setupMenu(); });
 
 var _origGoMenu=goMenu;
 goMenu=function(){if(dead&&score>0)saveRec(score);_origGoMenu();};
