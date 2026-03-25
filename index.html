@@ -1118,21 +1118,23 @@ function clearLines() {
   for(var r=0;r<GS;r++){var ok=true;for(var c=0;c<GS;c++)if(!grid[r][c]){ok=false;break;}if(ok)rows.push(r);}
   for(var cc=0;cc<GS;cc++){var ok2=true;for(var rr=0;rr<GS;rr++)if(!grid[rr][cc]){ok2=false;break;}if(ok2)cols.push(cc);}
   var total=rows.length+cols.length;
-  if(!total){combo=0;updateComboUI();return;}
+  if(!total){combo=0;updateComboUI();updateStreakUI();return;}
 
-  combo++;
+  // каждая линия = +1 к комбо
+  combo += total;
   if(combo>maxCombo) maxCombo=combo;
   totalLines+=total;
 
   var base=total*GS*10;
-  var comboMult = combo>1 ? 1+(combo-1)*0.6 : 1;
+  // множитель зависит от текущего комбо (накопленного)
+  var comboMult = combo>1 ? 1+(combo-1)*0.5 : 1;
   var pts=Math.floor(base*comboMult);
   addScore(pts);
   showFS(pts, rows, cols);
   flashLines(rows,cols);
   sfxClear(total);
-  haptic(total>=2?'combo':'clear');
-  if(combo>1){sfxCombo(combo);showComboPop(combo);}
+  haptic(combo>=3?'combo':'clear');
+  if(combo>1){sfxCombo(Math.min(combo,8));showComboPop(combo);}
   updateComboUI();
   updateStreakUI();
 
@@ -1149,13 +1151,13 @@ function clearLines() {
       spawnP(rect.left+c*CELL+CELL/2, rect.top+r*CELL+CELL/2, grid[r][c]?grid[r][c].f:'#38bdf8', 8);
     spawnStar(rect.left+c*CELL+CELL/2, rect.top+GS*CELL/2, '#38bdf8');
   });
-  if(total>=2) spawnBurst(midX, midY, '#ffd47e');
+  if(total>=2) spawnBurst(midX, midY, drag.col?drag.col.f:'#ffd47e');
 
   setTimeout(function(){
     rows.forEach(function(r){grid[r]=new Array(GS).fill(null);});
     cols.forEach(function(c){for(var r=0;r<GS;r++)grid[r][c]=null;});
     updateFillMeter();
-    updateSlotFitHints(); // re-check AFTER grid is actually cleared
+    updateSlotFitHints();
   },210);
 }
 
@@ -1624,105 +1626,158 @@ function openShareCard(){
 // MENU — animated canvas with real pieces
 // ══════════════════════════════════════════════════════════
 // ══════════════════════════════════════════════════════════
-// FIRE CANVAS ENGINE — каждый уровень серии = +1 уровень огня
+// FIRE CANVAS ENGINE v3 — 12 уровней, частицы + искры + угли
 // ══════════════════════════════════════════════════════════
-var fireRaf = null, fireParticles = [], fireLevel = 0;
+var fireRaf=null, fireParticles=[], fireLevel=0;
 
-// Per-level fire config (level = streak count, starting from 2)
-function fireConfig(lv) {
-  // lv = actual combo number (2, 3, 4...)
-  var l = Math.min(lv - 2, 9); // 0..9
-  return {
-    palette: [
-      // l=0 (x2): tiny warm yellow
-      ['#e8a000','#ffc200','#ffe066'],
-      // l=1 (x3): orange
-      ['#e05000','#ff7800','#ffc000'],
-      // l=2 (x4): orange-red
-      ['#cc2200','#ff5500','#ffaa00'],
-      // l=3 (x5): hot red
-      ['#bb0000','#ff2200','#ff8800'],
-      // l=4 (x6): crimson
-      ['#990000','#ff0000','#ff5500','#ffcc00'],
-      // l=5 (x7): red + white core
-      ['#880000','#ff0000','#ff3300','#ffffff'],
-      // l=6 (x8): pink-red inferno
-      ['#cc0044','#ff0055','#ff4400','#ffcc00','#ffffff'],
-      // l=7 (x9): purple enters
-      ['#7700cc','#dd00ff','#ff0066','#ff6600','#ffee00'],
-      // l=8 (x10): deep purple inferno
-      ['#5500bb','#aa00ff','#ff00aa','#ff3300','#ffdd00'],
-      // l=9 (x11+): legendary — full rainbow inferno
-      ['#4400aa','#8800ff','#ff00ff','#ff0066','#ff4400','#ffff00'],
-    ][Math.min(l,9)],
-    spawnRate:  1 + l,             // 1..10 particles/frame
-    sizeBase:   3.5 + l*0.7,      // base particle radius
-    speedBase:  1.1 + l*0.14,     // upward speed
-    spread:     0.5 + l*0.1,      // horizontal spread
-    decay:      Math.max(0.012, 0.022 - l*0.001),
-    glowBlur:   l >= 1 ? 4 + l*3.5 : 0,
-    canvasSize: 38 + l*5,          // canvas px (grows each level)
-    wobble:     0.04 + l*0.015,
-  };
-}
+var FIRE_LEVELS=[
+  // 0=x2: крошечный тёплый огонёк
+  {pal:['#c06000','#e08000','#ffc000'],spawn:1,sz:2.5,spd:0.8,spread:0.3,decay:0.028,glow:0,smoke:false,sparks:0},
+  // 1=x3: маленький оранжевый
+  {pal:['#d05000','#f07000','#ffa000'],spawn:2,sz:3.2,spd:1.0,spread:0.45,decay:0.024,glow:3,smoke:false,sparks:0},
+  // 2=x4: оранжевый с жёлтым
+  {pal:['#e04000','#ff6000','#ffb000','#ffe060'],spawn:3,sz:3.8,spd:1.2,spread:0.55,decay:0.022,glow:5,smoke:false,sparks:1},
+  // 3=x5: красно-оранжевый
+  {pal:['#cc2000','#ff4400','#ff9000','#ffdd00'],spawn:4,sz:4.4,spd:1.4,spread:0.65,decay:0.020,glow:7,smoke:false,sparks:2},
+  // 4=x6: горячий красный
+  {pal:['#aa0000','#ff2200','#ff7000','#ffcc00'],spawn:5,sz:5.0,spd:1.6,spread:0.75,decay:0.018,glow:10,smoke:true,sparks:3,core:true},
+  // 5=x7: алый интенсивный
+  {pal:['#990000','#ff1100','#ff5500','#ffaa00','#ffffff'],spawn:6,sz:5.6,spd:1.8,spread:0.85,decay:0.017,glow:13,smoke:true,sparks:4,core:true},
+  // 6=x8: малиново-золотой
+  {pal:['#bb0033','#ff0044','#ff4400','#ffcc00','#ffffff'],spawn:7,sz:6.2,spd:2.0,spread:0.95,decay:0.016,glow:16,smoke:true,sparks:5,core:true},
+  // 7=x9: фиолетовый входит
+  {pal:['#880088','#cc00ff','#ff0066','#ff6600','#ffee00','#ffffff'],spawn:8,sz:6.8,spd:2.2,spread:1.05,decay:0.015,glow:19,smoke:true,sparks:6,core:true},
+  // 8=x10: тёмный фиолетовый инферно
+  {pal:['#550099','#9900ff','#ff00bb','#ff3300','#ffdd00','#ffffff'],spawn:9,sz:7.4,spd:2.4,spread:1.15,decay:0.014,glow:22,smoke:true,sparks:7,core:true},
+  // 9=x11: синий плазменный
+  {pal:['#0022aa','#0066ff','#00ccff','#ffffff','#aaffff'],spawn:10,sz:7.8,spd:2.6,spread:1.2,decay:0.013,glow:25,smoke:true,sparks:8,core:true},
+  // 10=x12: радужный легендарный
+  {pal:['#ff0000','#ff8800','#ffff00','#00ff88','#0088ff','#cc00ff','#ffffff'],spawn:11,sz:8.2,spd:2.8,spread:1.3,decay:0.012,glow:28,smoke:true,sparks:9,core:true},
+  // 11=x13+: УЛЬТРА — белое пламя с радугой
+  {pal:['#ffffff','#ffffa0','#ff88ff','#88ffff','#ffaa00','#ffffff'],spawn:13,sz:9.0,spd:3.0,spread:1.5,decay:0.011,glow:32,smoke:true,sparks:12,core:true},
+];
 
-function lerpColor(p, t) {
-  var i = t*(p.length-1), lo=Math.floor(i), hi=Math.min(lo+1,p.length-1), f=i-lo;
+function lerpColor(p,t){
+  var i=t*(p.length-1),lo=Math.floor(i),hi=Math.min(lo+1,p.length-1),f=i-lo;
   function h(s){return[parseInt(s.slice(1,3),16),parseInt(s.slice(3,5),16),parseInt(s.slice(5,7),16)];}
   var a=h(p[lo]),b=h(p[hi]);
   return 'rgb('+Math.round(a[0]+(b[0]-a[0])*f)+','+Math.round(a[1]+(b[1]-a[1])*f)+','+Math.round(a[2]+(b[2]-a[2])*f)+')';
 }
 
-function startFireCanvas(streakCount) {
+function startFireCanvas(streakCount){
   stopFireCanvas();
-  fireLevel = streakCount;
-  var cv = document.getElementById('fireCanvas');
+  fireLevel=streakCount;
+  var cv=document.getElementById('fireCanvas');
   if(!cv) return;
-  var cfg = fireConfig(fireLevel);
-  var sz = Math.round(cfg.canvasSize);
-  cv.width = sz; cv.height = Math.round(sz*1.4);
-  cv.style.width = cv.width+'px'; cv.style.height = cv.height+'px';
-  var ctx = cv.getContext('2d');
-  fireParticles = [];
+
+  var li=Math.min(streakCount-2, FIRE_LEVELS.length-1);
+  var cfg=FIRE_LEVELS[li];
+
+  // canvas grows with level
+  var sz=Math.round(36 + li*5);
+  cv.width=sz; cv.height=Math.round(sz*1.5);
+  cv.style.width=cv.width+'px'; cv.style.height=cv.height+'px';
+
+  var ctx=cv.getContext('2d');
+  fireParticles=[];
 
   (function tick(){
     ctx.clearRect(0,0,cv.width,cv.height);
-    var c = fireConfig(fireLevel); // re-read in case level updated
-    for(var s=0;s<c.spawnRate;s++){
-      var cx2 = cv.width/2 + (Math.random()-0.5)*cv.width*0.4;
+    var l2=Math.min(fireLevel-2, FIRE_LEVELS.length-1);
+    var c=FIRE_LEVELS[l2];
+
+    // spawn main flame particles
+    for(var s=0;s<c.spawn;s++){
+      var cx2=cv.width/2+(Math.random()-0.5)*cv.width*0.45;
       fireParticles.push({
+        type:'flame',
         x:cx2, y:cv.height-2,
         vx:(Math.random()-0.5)*c.spread,
-        vy:-(c.speedBase+Math.random()*1.2),
-        life:1, decay:c.decay+Math.random()*0.008,
-        size:c.sizeBase*(0.6+Math.random()*0.8),
-        wx:(Math.random()-0.5)*c.wobble,
+        vy:-(c.spd+Math.random()*0.8),
+        life:1, decay:c.decay+Math.random()*0.006,
+        size:c.sz*(0.5+Math.random()*0.9),
+        wx:(Math.random()-0.5)*0.08,
       });
     }
-    if(fireParticles.length>300) fireParticles.splice(0,fireParticles.length-300);
 
-    fireParticles = fireParticles.filter(function(p){
-      p.x+=p.vx+p.wx; p.y+=p.vy; p.vy+=0.035; p.vx+=(Math.random()-0.5)*0.05;
+    // spawn sparks / embers
+    if(c.sparks>0 && Math.random()<0.4){
+      for(var k=0;k<Math.ceil(c.sparks*0.5);k++){
+        fireParticles.push({
+          type:'spark',
+          x:cv.width/2+(Math.random()-0.5)*cv.width*0.3,
+          y:cv.height-4,
+          vx:(Math.random()-0.5)*c.spread*2.5,
+          vy:-(c.spd*1.4+Math.random()*1.5),
+          life:1, decay:0.028+Math.random()*0.02,
+          size:1+Math.random()*1.5,
+          wx:0,
+          col:c.pal[Math.floor(Math.random()*c.pal.length)],
+        });
+      }
+    }
+
+    if(fireParticles.length>350) fireParticles.splice(0,fireParticles.length-350);
+
+    fireParticles=fireParticles.filter(function(p){
+      p.x+=p.vx+p.wx; p.y+=p.vy;
+      p.vy+=0.03;
+      p.vx+=(Math.random()-0.5)*0.04;
       p.life-=p.decay;
       if(p.life<=0) return false;
-      var t=1-p.life; // 0=fresh(base), 1=old(tip)
-      var col=lerpColor(c.palette,t);
-      var r=Math.max(0.4,p.size*p.life);
+
       ctx.save();
-      ctx.globalAlpha=p.life*p.life*0.9;
-      if(c.glowBlur>0){ctx.shadowColor=col;ctx.shadowBlur=c.glowBlur;}
-      ctx.fillStyle=col;
-      ctx.beginPath();ctx.arc(p.x,p.y,r,0,Math.PI*2);ctx.fill();
-      // white hot core from level 3+
-      if(fireLevel>=5 && p.life>0.65){
-        ctx.shadowBlur=0;
-        ctx.fillStyle='#ffffff';
-        ctx.globalAlpha=(p.life-0.65)*2.2;
-        ctx.beginPath();ctx.arc(p.x,p.y,r*0.3,0,Math.PI*2);ctx.fill();
+
+      if(p.type==='spark'){
+        // sparks: bright dots that arc upward
+        ctx.globalAlpha=p.life*p.life;
+        ctx.shadowColor=p.col;
+        ctx.shadowBlur=4;
+        ctx.fillStyle=p.life>0.5?'#ffffff':p.col;
+        ctx.beginPath();
+        ctx.arc(p.x,p.y,Math.max(0.3,p.size*p.life),0,Math.PI*2);
+        ctx.fill();
+      } else {
+        // flame particles
+        var t=1-p.life;
+        var col=lerpColor(c.pal,t);
+        var r2=Math.max(0.4,p.size*p.life);
+
+        ctx.globalAlpha=p.life*p.life*0.92;
+        if(c.glow>0){
+          ctx.shadowColor=col;
+          ctx.shadowBlur=c.glow*(0.5+p.life*0.5);
+        }
+        ctx.fillStyle=col;
+        ctx.beginPath();
+        ctx.arc(p.x,p.y,r2,0,Math.PI*2);
+        ctx.fill();
+
+        // hot white core for high levels
+        if(c.core&&p.life>0.6){
+          ctx.shadowBlur=0;
+          ctx.fillStyle='rgba(255,255,255,'+(p.life-0.6)*2+')';
+          ctx.globalAlpha=(p.life-0.6)*2.5;
+          ctx.beginPath();
+          ctx.arc(p.x,p.y,r2*0.28,0,Math.PI*2);
+          ctx.fill();
+        }
+
+        // smoke puffs at high levels (grey semi-transparent circles floating up)
+        if(c.smoke&&p.life<0.25&&p.size>4){
+          ctx.shadowBlur=0;
+          ctx.globalAlpha=p.life*0.18;
+          ctx.fillStyle='rgba(200,200,220,1)';
+          ctx.beginPath();
+          ctx.arc(p.x,p.y,r2*2.5,0,Math.PI*2);
+          ctx.fill();
+        }
       }
+
       ctx.restore();
       return true;
     });
+
     ctx.globalAlpha=1;
     fireRaf=requestAnimationFrame(tick);
   })();
@@ -1732,7 +1787,7 @@ function stopFireCanvas(){
   if(fireRaf){cancelAnimationFrame(fireRaf);fireRaf=null;}
   fireParticles=[];
   var cv=document.getElementById('fireCanvas');
-  if(cv){var c=cv.getContext('2d');c.clearRect(0,0,cv.width,cv.height);}
+  if(cv){cv.getContext('2d').clearRect(0,0,cv.width,cv.height);}
 }
 
 var menuRaf=null, menuPieces=[];
@@ -1790,16 +1845,18 @@ function setupMenu(){
     var sv=document.getElementById('menuStreakVal');
     // каждый уровень серии — свой градиент
     var grads=[
-      'linear-gradient(135deg,#e8a000,#ffc200)',   // x2
-      'linear-gradient(135deg,#e05000,#ffaa00)',   // x3
-      'linear-gradient(135deg,#cc2200,#ff8800)',   // x4
-      'linear-gradient(135deg,#bb0000,#ff5500)',   // x5
-      'linear-gradient(135deg,#990000,#ff0000,#ff8800)', // x6
-      'linear-gradient(135deg,#880000,#ff0000,#ffffff)', // x7
-      'linear-gradient(135deg,#cc0044,#ff0055,#ffcc00)', // x8
-      'linear-gradient(135deg,#7700cc,#ff0066,#ffee00)', // x9
-      'linear-gradient(135deg,#5500bb,#ff00aa,#ffdd00)', // x10
-      'linear-gradient(135deg,#4400aa,#ff00ff,#ff0066,#ffff00)', // x11+
+      'linear-gradient(135deg,#c06000,#ffc000)',               // x2
+      'linear-gradient(135deg,#d05000,#ffa000)',               // x3
+      'linear-gradient(135deg,#e04000,#ffb000)',               // x4
+      'linear-gradient(135deg,#cc2000,#ff9000,#ffdd00)',       // x5
+      'linear-gradient(135deg,#aa0000,#ff7000,#ffcc00)',       // x6
+      'linear-gradient(135deg,#990000,#ff5500,#ffffff)',       // x7
+      'linear-gradient(135deg,#bb0033,#ff0044,#ffcc00)',       // x8
+      'linear-gradient(135deg,#880088,#ff0066,#ffee00)',       // x9
+      'linear-gradient(135deg,#550099,#ff00bb,#ffdd00)',       // x10
+      'linear-gradient(135deg,#0022aa,#00ccff,#ffffff)',       // x11
+      'linear-gradient(135deg,#ff0000,#ffff00,#00ff88,#0088ff,#cc00ff)', // x12
+      'linear-gradient(135deg,#ffffff,#ffffa0,#ff88ff,#88ffff)',          // x13+
     ];
     var gi=Math.min(bs-2, grads.length-1);
     sv.style.background=grads[gi];
@@ -1889,7 +1946,8 @@ document.getElementById('btnShareCl').addEventListener('click',function(){
 });
 // ══════════════════════════════════════════════════════════
 // BOOT
-runSplash(function(){ setupMenu(); });
+document.getElementById('sSplash').style.display='none';
+setupMenu();
 
 var _origGoMenu=goMenu;
 goMenu=function(){if(dead&&score>0)saveRec(score);_origGoMenu();};
