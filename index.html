@@ -1266,35 +1266,178 @@ function onLinesClear(total){
 // ══════════════════════════════════════════════════════════
 // SHAPES — точно как в Block Blast
 // ══════════════════════════════════════════════════════════
-var SHAPES=[
+// Auto-generated: all unique rotations of every Block Blast shape
+// Helper functions run at startup before game loop
+function _rot(cells){
+  var maxR=0;cells.forEach(function(c){if(c.r>maxR)maxR=c.r;});
+  var r=cells.map(function(c){return{r:c.c,c:maxR-c.r};});
+  var minR=9,minC=9;r.forEach(function(c){if(c.r<minR)minR=c.r;if(c.c<minC)minC=c.c;});
+  return r.map(function(c){return{r:c.r-minR,c:c.c-minC};});
+}
+function _key(cells){return cells.slice().sort(function(a,b){return a.r-b.r||a.c-b.c;}).map(function(c){return c.r+','+c.c;}).join('|');}
+function _allRots(cells){
+  var seen={},res=[],cur=cells;
+  for(var i=0;i<4;i++){var k=_key(cur);if(!seen[k]){seen[k]=true;res.push(cur.slice());}cur=_rot(cur);}
+  return res;
+}
+
+var _BASE=[
+  // 1
   [{r:0,c:0}],
+  // 2
   [{r:0,c:0},{r:0,c:1}],
-  [{r:0,c:0},{r:1,c:0}],
+  // 3 прямая
   [{r:0,c:0},{r:0,c:1},{r:0,c:2}],
-  [{r:0,c:0},{r:1,c:0},{r:2,c:0}],
+  // 3 уголок
   [{r:0,c:0},{r:1,c:0},{r:1,c:1}],
-  [{r:0,c:1},{r:1,c:0},{r:1,c:1}],
-  [{r:0,c:0},{r:0,c:1},{r:1,c:0}],
-  [{r:0,c:0},{r:0,c:1},{r:1,c:1}],
+  // 4 прямая
   [{r:0,c:0},{r:0,c:1},{r:0,c:2},{r:0,c:3}],
-  [{r:0,c:0},{r:1,c:0},{r:2,c:0},{r:3,c:0}],
+  // 4 квадрат
   [{r:0,c:0},{r:0,c:1},{r:1,c:0},{r:1,c:1}],
+  // 4 L
   [{r:0,c:0},{r:1,c:0},{r:2,c:0},{r:2,c:1}],
-  [{r:0,c:1},{r:1,c:1},{r:2,c:0},{r:2,c:1}],
-  [{r:0,c:0},{r:0,c:1},{r:0,c:2},{r:1,c:0}],
-  [{r:0,c:0},{r:0,c:1},{r:0,c:2},{r:1,c:2}],
-  [{r:0,c:0},{r:1,c:0},{r:1,c:1},{r:1,c:2}],
-  [{r:0,c:2},{r:1,c:0},{r:1,c:1},{r:1,c:2}],
+  // 4 T
+  [{r:0,c:0},{r:0,c:1},{r:0,c:2},{r:1,c:1}],
+  // 4 S
+  [{r:0,c:0},{r:0,c:1},{r:1,c:1},{r:1,c:2}],
+  // 4 Z
+  [{r:0,c:1},{r:0,c:2},{r:1,c:0},{r:1,c:1}],
+  // 5 прямая
   [{r:0,c:0},{r:0,c:1},{r:0,c:2},{r:0,c:3},{r:0,c:4}],
-  [{r:0,c:0},{r:1,c:0},{r:2,c:0},{r:3,c:0},{r:4,c:0}],
+  // 5 крест +
+  [{r:0,c:1},{r:1,c:0},{r:1,c:1},{r:1,c:2},{r:2,c:1}],
+  // 5 L большой
   [{r:0,c:0},{r:1,c:0},{r:2,c:0},{r:2,c:1},{r:2,c:2}],
-  [{r:0,c:2},{r:1,c:2},{r:2,c:0},{r:2,c:1},{r:2,c:2}],
-  [{r:0,c:0},{r:0,c:1},{r:0,c:2},{r:1,c:0},{r:2,c:0}],
-  [{r:0,c:0},{r:0,c:1},{r:0,c:2},{r:1,c:2},{r:2,c:2}],
-  [{r:0,c:0},{r:0,c:1},{r:0,c:2},{r:1,c:0},{r:1,c:1},{r:1,c:2},{r:2,c:0},{r:2,c:1},{r:2,c:2}],
+  // 5 T большой
+  [{r:0,c:0},{r:0,c:1},{r:0,c:2},{r:1,c:1},{r:2,c:1}],
+  // 5 S большой
+  [{r:0,c:0},{r:0,c:1},{r:1,c:1},{r:1,c:2},{r:2,c:2}],
+  // 5 P (2x2+1 снизу)
+  [{r:0,c:0},{r:0,c:1},{r:1,c:0},{r:1,c:1},{r:2,c:0}],
+  // 5 F
+  [{r:0,c:1},{r:0,c:2},{r:1,c:0},{r:1,c:1},{r:2,c:1}],
+  // 5 Y
+  [{r:0,c:1},{r:1,c:0},{r:1,c:1},{r:2,c:1},{r:3,c:1}],
+  // 5 U
+  [{r:0,c:0},{r:0,c:2},{r:1,c:0},{r:1,c:1},{r:1,c:2}],
+  // 5 N зигзаг
+  [{r:0,c:0},{r:0,c:1},{r:1,c:1},{r:1,c:2},{r:2,c:2}],
+  // 5 W лесенка
+  [{r:0,c:0},{r:1,c:0},{r:1,c:1},{r:2,c:1},{r:2,c:2}],
+  // 5 V уголок 3x3
+  [{r:0,c:0},{r:1,c:0},{r:2,c:0},{r:2,c:1},{r:2,c:2}],
+  // 5 I+L (4+1)
+  [{r:0,c:0},{r:0,c:1},{r:0,c:2},{r:0,c:3},{r:1,c:0}],
+  // 5 J+1
+  [{r:0,c:0},{r:0,c:1},{r:0,c:2},{r:0,c:3},{r:1,c:3}],
+  // 3x2 прямоугольник
   [{r:0,c:0},{r:0,c:1},{r:0,c:2},{r:1,c:0},{r:1,c:1},{r:1,c:2}],
+  // 2x3
   [{r:0,c:0},{r:0,c:1},{r:1,c:0},{r:1,c:1},{r:2,c:0},{r:2,c:1}],
+  // 3x3 квадрат
+  [{r:0,c:0},{r:0,c:1},{r:0,c:2},{r:1,c:0},{r:1,c:1},{r:1,c:2},{r:2,c:0},{r:2,c:1},{r:2,c:2}],
 ];
+
+// Build SHAPES with all unique rotations
+var SHAPES=(function(){
+  var GS_=8; // grid size constant
+  var seen={},res=[];
+  _BASE.forEach(function(base){
+    _allRots(base).forEach(function(rot){
+      var dim={rows:0,cols:0};
+      rot.forEach(function(c){if(c.r>=dim.rows)dim.rows=c.r+1;if(c.c>=dim.cols)dim.cols=c.c+1;});
+      if(dim.rows<=GS_&&dim.cols<=GS_){
+        var k=_key(rot);
+        if(!seen[k]){seen[k]=true;res.push(rot);}
+      }
+    });
+  });
+  return res;
+})();
+// ── Smart trio: pick 3 shapes that complement each other ──
+// Simulate placing each piece and check combined board improvement
+
+function simulatePlace(tempGrid, cells, startR, startC) {
+  // Try to find best position for cells on tempGrid, return new grid or null
+  var dim = maxRC(cells);
+  var bestScore = -1, bestGrid = null;
+  for(var sr=0; sr<=GS-dim.rows; sr++) {
+    for(var sc=0; sc<=GS-dim.cols; sc++) {
+      var ok = true;
+      for(var i=0; i<cells.length&&ok; i++) {
+        var r=sr+cells[i].r, c=sc+cells[i].c;
+        if(r<0||r>=GS||c<0||c>=GS||tempGrid[r][c]) ok=false;
+      }
+      if(!ok) continue;
+      // Score this placement by lines it would complete
+      var ng = tempGrid.map(function(row){return row.slice();});
+      cells.forEach(function(cell){ng[sr+cell.r][sc+cell.c]=true;});
+      var lines = 0;
+      for(var r2=0;r2<GS;r2++){var f=true;for(var c2=0;c2<GS;c2++)if(!ng[r2][c2]){f=false;break;}if(f)lines++;}
+      for(var cc=0;cc<GS;cc++){var f2=true;for(var rr=0;rr<GS;rr++)if(!ng[rr][cc]){f2=false;break;}if(f2)lines++;}
+      if(lines > bestScore){bestScore=lines; bestGrid=ng;}
+    }
+  }
+  return {grid: bestGrid, lines: bestScore, fits: bestGrid!==null};
+}
+
+function scoreTrio(sh1, sh2, sh3) {
+  if(!grid) return 0;
+  var baseGrid = grid.map(function(row){return row.map(function(c){return c?true:false;});});
+  // Try placing all 3 in best positions
+  var r1 = simulatePlace(baseGrid, sh1, 0, 0);
+  if(!r1.fits) return -999;
+  var r2 = simulatePlace(r1.grid||baseGrid, sh2, 0, 0);
+  var r3 = simulatePlace((r2.fits?r2.grid:r1.grid)||baseGrid, sh3, 0, 0);
+  var totalLines = (r1.lines||0) + (r2.lines||0) + (r3.lines||0);
+  var totalFits = (r1.fits?1:0) + (r2.fits?1:0) + (r3.fits?1:0);
+  return totalLines * 100 + totalFits * 10 + sh1.length + sh2.length + sh3.length;
+}
+
+function spawnPieces(){
+  var diff = getDifficulty();
+  var newPieces = [];
+
+  if(diff < 0.5) {
+    // Smart mode: try several trios, pick best
+    var bestTrio = null, bestTrioScore = -Infinity;
+    var trioAttempts = diff < 0.2 ? 8 : 5;
+    for(var t=0; t<trioAttempts; t++) {
+      var s1 = pickShapeNoRepeat();
+      var s2 = pickShapeNoRepeat();
+      var s3 = pickShapeNoRepeat();
+      var ts = scoreTrio(s1, s2, s3);
+      if(ts > bestTrioScore) {
+        bestTrioScore = ts;
+        bestTrio = [s1, s2, s3];
+      }
+    }
+    // Reset lastShapes and use best trio
+    _lastShapes = [];
+    bestTrio.forEach(function(sh){
+      _lastShapes.push(JSON.stringify(sh));
+      newPieces.push({cells:sh.map(function(c){return{r:c.r,c:c.c};}),color:COLS[rngInt(COLS.length)],used:false});
+    });
+  } else {
+    // High difficulty: just pick individually
+    for(var i=0;i<3;i++){
+      var sh=pickShapeNoRepeat();
+      newPieces.push({cells:sh.map(function(c){return{r:c.r,c:c.c};}),color:COLS[rngInt(COLS.length)],used:false});
+    }
+  }
+
+  pieces = newPieces;
+
+  requestAnimationFrame(function(){requestAnimationFrame(function(){
+    renderAllPieces();
+    [0,1,2].forEach(function(i){(function(idx){
+      var slot=document.getElementById('ps'+idx);if(!slot)return;
+      slot.classList.remove('spawning');void slot.offsetWidth;
+      slot.style.animationDelay=(idx*.08)+'s';slot.classList.add('spawning');
+      setTimeout(function(){if(slot){slot.classList.remove('spawning');slot.style.animationDelay='';}},500);
+    })(i);});
+  });});
+}
 
 // ══════════════════════════════════════════════════════════
 // GAME STATE
