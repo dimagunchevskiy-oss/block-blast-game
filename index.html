@@ -10,9 +10,9 @@
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Fredoka+One&display=swap');
+/* Offline-first: system rounded fonts */
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none}
-html,body{width:100%;height:100%;overflow:hidden;touch-action:none;background:#1a237e;font-family:'Fredoka One',cursive}
+html,body{width:100%;height:100%;overflow:hidden;touch-action:none;background:#1a237e;font-family:'Fredoka One','Nunito','Varela Round','Comic Sans MS',cursive}
 
 .scr{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;
   justify-content:center;transition:opacity .35s ease,transform .35s ease}
@@ -100,7 +100,7 @@ html,body{width:100%;height:100%;overflow:hidden;touch-action:none;background:#1
 .task-reward{flex-shrink:0;text-align:center;font-size:13px;color:#ffd740}
 .task-reward-ico{font-size:18px;display:block}
 .task-claim{flex-shrink:0;background:linear-gradient(145deg,#4caf50,#2e7d32);border:none;
-  border-radius:11px;padding:8px 12px;font-family:'Fredoka One',cursive;font-size:14px;
+  border-radius:11px;padding:8px 12px;font-family:'Fredoka One','Nunito','Varela Round','Comic Sans MS',cursive;font-size:14px;
   color:#fff;cursor:pointer;box-shadow:0 3px 0 #1b5e20;transition:transform .1s}
 .task-claim:active{transform:translateY(2px);box-shadow:none}
 .task-claimed{flex-shrink:0;font-size:22px}
@@ -120,7 +120,7 @@ html,body{width:100%;height:100%;overflow:hidden;touch-action:none;background:#1
 .stat-card-val.red{color:#ff5252}
 
 /* Buttons — shared */
-.bb-btn{border:none;border-radius:18px;font-family:'Fredoka One',cursive;
+.bb-btn{border:none;border-radius:18px;font-family:'Fredoka One','Nunito','Varela Round','Comic Sans MS',cursive;
   font-size:19px;color:#fff;cursor:pointer;padding:14px 24px;
   transition:transform .1s,box-shadow .1s;display:flex;align-items:center;justify-content:center;gap:8px}
 .bb-btn:active{transform:translateY(3px)}
@@ -222,7 +222,7 @@ html,body{width:100%;height:100%;overflow:hidden;touch-action:none;background:#1
 
 /* ══ FX ══ */
 #pc{position:fixed;inset:0;pointer-events:none;z-index:200}
-.score-fly{position:fixed;pointer-events:none;z-index:260;font-family:'Fredoka One',cursive;
+.score-fly{position:fixed;pointer-events:none;z-index:260;font-family:'Fredoka One','Nunito','Varela Round','Comic Sans MS',cursive;
   font-size:22px;color:#fff;text-shadow:0 2px 12px rgba(0,0,0,.5)}
 .lfl{position:absolute;pointer-events:none;z-index:14;animation:lfa .5s ease forwards}
 @keyframes lfa{0%{opacity:.9}100%{opacity:0;transform:scale(1.03)}}
@@ -235,7 +235,7 @@ html,body{width:100%;height:100%;overflow:hidden;touch-action:none;background:#1
   opacity:0;animation:sflash .4s ease forwards}
 @keyframes sflash{0%{opacity:0}25%{opacity:1}100%{opacity:0}}
 .coins-pop{position:fixed;left:50%;pointer-events:none;z-index:900;
-  font-family:'Fredoka One',cursive;font-size:24px;color:#ffd740;
+  font-family:'Fredoka One','Nunito','Varela Round','Comic Sans MS',cursive;font-size:24px;color:#ffd740;
   text-shadow:0 2px 10px rgba(255,215,64,.6);animation:coinspop .9s ease forwards}
 @keyframes coinspop{0%{opacity:0;transform:translateX(-50%) translateY(0) scale(.6)}
   40%{opacity:1;transform:translateX(-50%) translateY(-28px) scale(1.12)}
@@ -249,7 +249,7 @@ html,body{width:100%;height:100%;overflow:hidden;touch-action:none;background:#1
 .share-wrap{display:flex;flex-direction:column;align-items:center;gap:14px}
 #shareCard{border-radius:22px;box-shadow:0 30px 80px rgba(0,0,0,.8)}
 .share-actions{display:flex;gap:10px}
-.share-btn{padding:12px 22px;border:none;border-radius:14px;font-family:'Fredoka One',cursive;font-size:17px;color:#fff;cursor:pointer;transition:transform .1s}
+.share-btn{padding:12px 22px;border:none;border-radius:14px;font-family:'Fredoka One','Nunito','Varela Round','Comic Sans MS',cursive;font-size:17px;color:#fff;cursor:pointer;transition:transform .1s}
 .share-btn:active{transform:scale(.96)}
 .share-btn-dl{background:linear-gradient(145deg,#7c4dff,#512da8);box-shadow:0 4px 0 #311b92}
 .share-btn-cl{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2)}
@@ -277,7 +277,7 @@ html,body{width:100%;height:100%;overflow:hidden;touch-action:none;background:#1
 .shop-name{font-size:15px;color:#fff;margin-bottom:5px;text-shadow:0 1px 4px rgba(0,0,0,.3)}
 .shop-price-row{display:flex;align-items:center;justify-content:center;gap:5px}
 .shop-price-val{font-size:14px;color:#ffd740}
-.shop-badge{position:absolute;top:6px;right:6px;background:linear-gradient(135deg,#f43f5e,#ffd740);border-radius:8px;padding:2px 6px;font-size:10px;color:#fff;font-family:'Fredoka One',cursive}
+.shop-badge{position:absolute;top:6px;right:6px;background:linear-gradient(135deg,#f43f5e,#ffd740);border-radius:8px;padding:2px 6px;font-size:10px;color:#fff;font-family:'Fredoka One','Nunito','Varela Round','Comic Sans MS',cursive}
 .shop-owned-tag{font-size:13px;color:#69f0ae}
 .shop-active-tag{font-size:13px;color:#ffd740}
 /* Coins bar same as daily */
@@ -780,7 +780,7 @@ var BOARD_THEMES=[
    ctx.fillStyle=col.f;rrect(ctx,x,y,w,h,r);ctx.fill();
    var g=ctx.createLinearGradient(x,y,x,y+h);g.addColorStop(0,'rgba(255,255,255,.58)');g.addColorStop(.38,'rgba(255,255,255,.14)');g.addColorStop(1,'rgba(0,0,0,.14)');ctx.fillStyle=g;rrect(ctx,x,y,w,h,r);ctx.fill();
    ctx.fillStyle=col.sh;rrect(ctx,x+2,y+1.5,w-4,Math.max(1,h*.1),r*.3);ctx.fill();
-   var rg=ctx.createRadialGradient(x+w*.22,y+h*.2,0,x+w*.22,y+h*.2,w*.38);rg.addColorStop(0,'rgba(255,255,255,.72)');rg.addColorStop(1,'rgba(255,255,255,0)');ctx.fillStyle=rg;rrect(ctx,x,y,w,h,r);ctx.fill();
+   ctx.fillStyle='rgba(255,255,255,.62)';ctx.beginPath();ctx.arc(x+w*.22,y+h*.2,Math.max(.5,cs*.09),0,Math.PI*2);ctx.fill();
  }},
 
 // ──────────────────────────────────────────────────────────
@@ -1266,167 +1266,220 @@ function onLinesClear(total){
 // ══════════════════════════════════════════════════════════
 // SHAPES — точно как в Block Blast
 // ══════════════════════════════════════════════════════════
-// Auto-generated: all unique rotations of every Block Blast shape
-// Helper functions run at startup before game loop
-function _rot(cells){
-  var maxR=0;cells.forEach(function(c){if(c.r>maxR)maxR=c.r;});
-  var r=cells.map(function(c){return{r:c.c,c:maxR-c.r};});
-  var minR=9,minC=9;r.forEach(function(c){if(c.r<minR)minR=c.r;if(c.c<minC)minC=c.c;});
-  return r.map(function(c){return{r:c.r-minR,c:c.c-minC};});
-}
-function _key(cells){return cells.slice().sort(function(a,b){return a.r-b.r||a.c-b.c;}).map(function(c){return c.r+','+c.c;}).join('|');}
-function _allRots(cells){
-  var seen={},res=[],cur=cells;
-  for(var i=0;i<4;i++){var k=_key(cur);if(!seen[k]){seen[k]=true;res.push(cur.slice());}cur=_rot(cur);}
-  return res;
-}
-
-var _BASE=[
-  // 1
+var SHAPES=[
+  // 1 клетка
   [{r:0,c:0}],
-  // 2
+
+  // 2 клетки горизонталь
   [{r:0,c:0},{r:0,c:1}],
-  // 3 прямая
+  // 2 клетки вертикаль
+  [{r:0,c:0},{r:1,c:0}],
+  // 2 клетки диагональ (как на фото)
+  [{r:0,c:0},{r:1,c:1}],
+  [{r:0,c:1},{r:1,c:0}],
+
+  // 3 горизонталь
   [{r:0,c:0},{r:0,c:1},{r:0,c:2}],
-  // 3 уголок
+  // 3 вертикаль
+  [{r:0,c:0},{r:1,c:0},{r:2,c:0}],
+  // 3 уголок - все 4 поворота
   [{r:0,c:0},{r:1,c:0},{r:1,c:1}],
-  // 4 прямая
+  [{r:0,c:1},{r:1,c:0},{r:1,c:1}],
+  [{r:0,c:0},{r:0,c:1},{r:1,c:0}],
+  [{r:0,c:0},{r:0,c:1},{r:1,c:1}],
+
+  // 4 горизонталь
   [{r:0,c:0},{r:0,c:1},{r:0,c:2},{r:0,c:3}],
-  // 4 квадрат
+  // 4 вертикаль
+  [{r:0,c:0},{r:1,c:0},{r:2,c:0},{r:3,c:0}],
+  // 4 квадрат 2x2
   [{r:0,c:0},{r:0,c:1},{r:1,c:0},{r:1,c:1}],
-  // 4 L
+
+  // L-фигура 4 клетки - все 4 поворота
   [{r:0,c:0},{r:1,c:0},{r:2,c:0},{r:2,c:1}],
-  // 4 T
-  [{r:0,c:0},{r:0,c:1},{r:0,c:2},{r:1,c:1}],
-  // 4 S
+  [{r:0,c:0},{r:0,c:1},{r:0,c:2},{r:1,c:0}],
+  [{r:0,c:0},{r:0,c:1},{r:1,c:1},{r:2,c:1}],
+  [{r:0,c:2},{r:1,c:0},{r:1,c:1},{r:1,c:2}],
+
+  // J-фигура 4 клетки - все 4 поворота
+  [{r:0,c:1},{r:1,c:1},{r:2,c:0},{r:2,c:1}],
+  [{r:0,c:0},{r:0,c:1},{r:0,c:2},{r:1,c:2}],
+  [{r:0,c:0},{r:0,c:1},{r:1,c:0},{r:2,c:0}],
+  [{r:0,c:0},{r:1,c:0},{r:1,c:1},{r:1,c:2}],
+
+  // S-фигура 4 клетки - 2 поворота
   [{r:0,c:0},{r:0,c:1},{r:1,c:1},{r:1,c:2}],
-  // 4 Z
+  [{r:0,c:1},{r:1,c:0},{r:1,c:1},{r:2,c:0}],
+
+  // Z-фигура 4 клетки - 2 поворота
   [{r:0,c:1},{r:0,c:2},{r:1,c:0},{r:1,c:1}],
-  // 5 прямая
+  [{r:0,c:0},{r:1,c:0},{r:1,c:1},{r:2,c:1}],
+
+  // 5 горизонталь
   [{r:0,c:0},{r:0,c:1},{r:0,c:2},{r:0,c:3},{r:0,c:4}],
-  // 5 крест +
-  [{r:0,c:1},{r:1,c:0},{r:1,c:1},{r:1,c:2},{r:2,c:1}],
-  // 5 L большой
+  // 5 вертикаль
+  [{r:0,c:0},{r:1,c:0},{r:2,c:0},{r:3,c:0},{r:4,c:0}],
+
+  // L большой 5 клеток - все 4 поворота
   [{r:0,c:0},{r:1,c:0},{r:2,c:0},{r:2,c:1},{r:2,c:2}],
-  // 5 T большой
-  [{r:0,c:0},{r:0,c:1},{r:0,c:2},{r:1,c:1},{r:2,c:1}],
-  // 5 S большой
-  [{r:0,c:0},{r:0,c:1},{r:1,c:1},{r:1,c:2},{r:2,c:2}],
-  // 5 P (2x2+1 снизу)
-  [{r:0,c:0},{r:0,c:1},{r:1,c:0},{r:1,c:1},{r:2,c:0}],
-  // 5 F
-  [{r:0,c:1},{r:0,c:2},{r:1,c:0},{r:1,c:1},{r:2,c:1}],
-  // 5 Y
-  [{r:0,c:1},{r:1,c:0},{r:1,c:1},{r:2,c:1},{r:3,c:1}],
-  // 5 U
-  [{r:0,c:0},{r:0,c:2},{r:1,c:0},{r:1,c:1},{r:1,c:2}],
-  // 5 N зигзаг
-  [{r:0,c:0},{r:0,c:1},{r:1,c:1},{r:1,c:2},{r:2,c:2}],
-  // 5 W лесенка
-  [{r:0,c:0},{r:1,c:0},{r:1,c:1},{r:2,c:1},{r:2,c:2}],
-  // 5 V уголок 3x3
-  [{r:0,c:0},{r:1,c:0},{r:2,c:0},{r:2,c:1},{r:2,c:2}],
-  // 5 I+L (4+1)
-  [{r:0,c:0},{r:0,c:1},{r:0,c:2},{r:0,c:3},{r:1,c:0}],
-  // 5 J+1
+  [{r:0,c:0},{r:0,c:1},{r:0,c:2},{r:1,c:0},{r:2,c:0}],
+  [{r:0,c:0},{r:0,c:1},{r:1,c:1},{r:2,c:1},{r:3,c:1}],  // убрал - слишком длинный
   [{r:0,c:0},{r:0,c:1},{r:0,c:2},{r:0,c:3},{r:1,c:3}],
+
+  // J большой 5 клеток - все 4 поворота
+  [{r:0,c:2},{r:1,c:2},{r:2,c:0},{r:2,c:1},{r:2,c:2}],
+  [{r:0,c:0},{r:0,c:1},{r:0,c:2},{r:1,c:2},{r:2,c:2}],
+  [{r:0,c:0},{r:0,c:1},{r:0,c:2},{r:0,c:3},{r:1,c:0}],
+  [{r:0,c:0},{r:1,c:0},{r:2,c:0},{r:2,c:1},{r:3,c:1}],  // убрал
+
   // 3x2 прямоугольник
   [{r:0,c:0},{r:0,c:1},{r:0,c:2},{r:1,c:0},{r:1,c:1},{r:1,c:2}],
-  // 2x3
+  // 2x3 прямоугольник
   [{r:0,c:0},{r:0,c:1},{r:1,c:0},{r:1,c:1},{r:2,c:0},{r:2,c:1}],
   // 3x3 квадрат
   [{r:0,c:0},{r:0,c:1},{r:0,c:2},{r:1,c:0},{r:1,c:1},{r:1,c:2},{r:2,c:0},{r:2,c:1},{r:2,c:2}],
 ];
+// Убираем вспомогательные функции генерации - они больше не нужны
 
-// Build SHAPES with all unique rotations
-var SHAPES=(function(){
-  var GS_=8; // grid size constant
-  var seen={},res=[];
-  _BASE.forEach(function(base){
-    _allRots(base).forEach(function(rot){
-      var dim={rows:0,cols:0};
-      rot.forEach(function(c){if(c.r>=dim.rows)dim.rows=c.r+1;if(c.c>=dim.cols)dim.cols=c.c+1;});
-      if(dim.rows<=GS_&&dim.cols<=GS_){
-        var k=_key(rot);
-        if(!seen[k]){seen[k]=true;res.push(rot);}
-      }
-    });
-  });
-  return res;
-})();
 // ── Smart trio: pick 3 shapes that complement each other ──
 // Simulate placing each piece and check combined board improvement
 
-function simulatePlace(tempGrid, cells, startR, startC) {
-  // Try to find best position for cells on tempGrid, return new grid or null
+// ══════════════════════════════════════════════════════════
+// AI ПОДБОР ФИГУР — умный алгоритм как в оригинале
+// ══════════════════════════════════════════════════════════
+
+// Найти ЛУЧШУЮ позицию для фигуры на поле — возвращает {grid, lines, pos}
+function bestPlacement(baseGrid, cells) {
   var dim = maxRC(cells);
-  var bestScore = -1, bestGrid = null;
-  for(var sr=0; sr<=GS-dim.rows; sr++) {
-    for(var sc=0; sc<=GS-dim.cols; sc++) {
+  var bestLines = -1, bestGrid = null, bestPos = null;
+  for(var sr = 0; sr <= GS-dim.rows; sr++) {
+    for(var sc = 0; sc <= GS-dim.cols; sc++) {
       var ok = true;
-      for(var i=0; i<cells.length&&ok; i++) {
-        var r=sr+cells[i].r, c=sc+cells[i].c;
-        if(r<0||r>=GS||c<0||c>=GS||tempGrid[r][c]) ok=false;
+      for(var i = 0; i < cells.length && ok; i++) {
+        var rr = sr+cells[i].r, cc = sc+cells[i].c;
+        if(rr<0||rr>=GS||cc<0||cc>=GS||baseGrid[rr][cc]) ok=false;
       }
       if(!ok) continue;
-      // Score this placement by lines it would complete
-      var ng = tempGrid.map(function(row){return row.slice();});
+      // Simulate placement
+      var ng = baseGrid.map(function(row){return row.slice();});
       cells.forEach(function(cell){ng[sr+cell.r][sc+cell.c]=true;});
-      var lines = 0;
-      for(var r2=0;r2<GS;r2++){var f=true;for(var c2=0;c2<GS;c2++)if(!ng[r2][c2]){f=false;break;}if(f)lines++;}
-      for(var cc=0;cc<GS;cc++){var f2=true;for(var rr=0;rr<GS;rr++)if(!ng[rr][cc]){f2=false;break;}if(f2)lines++;}
-      if(lines > bestScore){bestScore=lines; bestGrid=ng;}
-    }
-  }
-  return {grid: bestGrid, lines: bestScore, fits: bestGrid!==null};
-}
-
-function scoreTrio(sh1, sh2, sh3) {
-  if(!grid) return 0;
-  var baseGrid = grid.map(function(row){return row.map(function(c){return c?true:false;});});
-  // Try placing all 3 in best positions
-  var r1 = simulatePlace(baseGrid, sh1, 0, 0);
-  if(!r1.fits) return -999;
-  var r2 = simulatePlace(r1.grid||baseGrid, sh2, 0, 0);
-  var r3 = simulatePlace((r2.fits?r2.grid:r1.grid)||baseGrid, sh3, 0, 0);
-  var totalLines = (r1.lines||0) + (r2.lines||0) + (r3.lines||0);
-  var totalFits = (r1.fits?1:0) + (r2.fits?1:0) + (r3.fits?1:0);
-  return totalLines * 100 + totalFits * 10 + sh1.length + sh2.length + sh3.length;
-}
-
-function spawnPieces(){
-  var diff = getDifficulty();
-  var newPieces = [];
-
-  if(diff < 0.5) {
-    // Smart mode: try several trios, pick best
-    var bestTrio = null, bestTrioScore = -Infinity;
-    var trioAttempts = diff < 0.2 ? 8 : 5;
-    for(var t=0; t<trioAttempts; t++) {
-      var s1 = pickShapeNoRepeat();
-      var s2 = pickShapeNoRepeat();
-      var s3 = pickShapeNoRepeat();
-      var ts = scoreTrio(s1, s2, s3);
-      if(ts > bestTrioScore) {
-        bestTrioScore = ts;
-        bestTrio = [s1, s2, s3];
+      // Count completed lines
+      var lines = 0, clearRows=[], clearCols=[];
+      for(var r2=0;r2<GS;r2++){var f=true;for(var c2=0;c2<GS;c2++)if(!ng[r2][c2]){f=false;break;}if(f){lines++;clearRows.push(r2);}}
+      for(var c3=0;c3<GS;c3++){var f2=true;for(var r3=0;r3<GS;r3++)if(!ng[r3][c3]){f2=false;break;}if(f2){lines++;clearCols.push(c3);}}
+      // Clear completed lines from simulated grid
+      if(lines > 0) {
+        clearRows.forEach(function(r4){ng[r4]=new Array(GS).fill(false);});
+        clearCols.forEach(function(c4){for(var r5=0;r5<GS;r5++)ng[r5][c4]=false;});
+      }
+      if(lines > bestLines) {
+        bestLines=lines; bestGrid=ng; bestPos={r:sr,c:sc};
       }
     }
-    // Reset lastShapes and use best trio
-    _lastShapes = [];
-    bestTrio.forEach(function(sh){
-      _lastShapes.push(JSON.stringify(sh));
-      newPieces.push({cells:sh.map(function(c){return{r:c.r,c:c.c};}),color:COLS[rngInt(COLS.length)],used:false});
-    });
-  } else {
-    // High difficulty: just pick individually
-    for(var i=0;i<3;i++){
-      var sh=pickShapeNoRepeat();
-      newPieces.push({cells:sh.map(function(c){return{r:c.r,c:c.c};}),color:COLS[rngInt(COLS.length)],used:false});
+  }
+  return {grid:bestGrid, lines:bestLines>=0?bestLines:0, fits:bestGrid!==null, pos:bestPos};
+}
+
+// Подсчёт "почти полных" линий — сколько строк/столбцов осталось заполнить 1-3 клетками
+function countNearLines(g) {
+  var near = 0;
+  for(var r=0;r<GS;r++){var e=0;for(var c=0;c<GS;c++)if(!g[r][c])e++;if(e>0&&e<=3)near+=4-e;}
+  for(var c2=0;c2<GS;c2++){var e2=0;for(var r2=0;r2<GS;r2++)if(!g[r2][c2])e2++;if(e2>0&&e2<=3)near+=4-e2;}
+  return near;
+}
+
+// Полная оценка тройки фигур — симулируем все 3 по лучшим позициям
+function evaluateTrio(sh1, sh2, sh3) {
+  if(!grid) return -1;
+  var g0 = grid.map(function(row){return row.map(function(c){return !!c;});});
+
+  var p1 = bestPlacement(g0, sh1);
+  if(!p1.fits) return -9999;
+  var g1 = p1.grid;
+
+  var p2 = bestPlacement(g1, sh2);
+  var g2 = p2.fits ? p2.grid : g1;
+
+  var p3 = bestPlacement(g2, sh3);
+
+  var totalLines = p1.lines + p2.lines + p3.lines;
+  var totalFits  = (p1.fits?1:0) + (p2.fits?1:0) + (p3.fits?1:0);
+
+  // Бонус за "почти линии" после размещения — они будут легко убраны следующей тройкой
+  var nearBonus = countNearLines(p3.fits ? p3.grid : g2);
+
+  // Штраф за слишком большие фигуры когда поле заполнено
+  var filled = 0;
+  g0.forEach(function(row){row.forEach(function(c){if(c)filled++;});});
+  var fillPct = filled/(GS*GS);
+  var sizePenalty = 0;
+  if(fillPct > 0.6) {
+    [sh1,sh2,sh3].forEach(function(sh){if(sh.length>=5)sizePenalty+=20;});
+  }
+
+  // Разнообразие: штраф если все три одинакового размера
+  var sizes = [sh1.length, sh2.length, sh3.length].sort();
+  var diversityBonus = (sizes[0]!==sizes[2]) ? 15 : 0;
+
+  return totalLines * 200     // линии — главный приоритет
+       + nearBonus  * 8       // будущие лёгкие линии
+       + totalFits  * 30      // все 3 должны влезть
+       + diversityBonus       // разнообразие
+       - sizePenalty;         // не давать большие на заполненном поле
+}
+
+// Выбрать случайную фигуру из SHAPES (исключая недавно выданные)
+var _usedRecently = [];
+function pickRandShape() {
+  var pool = SHAPES.filter(function(sh){
+    var k = JSON.stringify(sh);
+    return _usedRecently.indexOf(k) === -1;
+  });
+  if(pool.length === 0) { _usedRecently = []; pool = SHAPES; }
+  return pool[rngInt(pool.length)];
+}
+
+// Финальный умный spawn: перебираем N троек, берём лучшую
+function spawnPieces(){
+  var diff = getDifficulty();
+
+  // Количество попыток перебора: много на низкой сложности, мало на высокой
+  var attempts = diff < 0.15 ? 60    // новичок: очень умный подбор
+               : diff < 0.35 ? 40    // лёгкий
+               : diff < 0.55 ? 25    // средний
+               : diff < 0.75 ? 12    // сложный
+               : 4;                  // хардкор: почти случайный
+
+  var bestTrio = null, bestScore = -Infinity;
+
+  for(var t = 0; t < attempts; t++) {
+    var s1 = pickRandShape();
+    var s2 = pickRandShape();
+    var s3 = pickRandShape();
+    var sc2 = evaluateTrio(s1, s2, s3);
+    if(sc2 > bestScore) {
+      bestScore = sc2;
+      bestTrio = [s1, s2, s3];
     }
   }
 
-  pieces = newPieces;
+  // На хардкоре иногда намеренно брать худшую тройку
+  if(diff > 0.8 && rng() < 0.3) {
+    bestTrio = [pickRandShape(), pickRandShape(), pickRandShape()];
+  }
+
+  // Запоминаем выданные фигуры чтобы не повторяться 2 раза подряд
+  _usedRecently = [];
+  bestTrio.forEach(function(sh){_usedRecently.push(JSON.stringify(sh));});
+  if(_usedRecently.length > 6) _usedRecently = _usedRecently.slice(-6);
+
+  pieces = bestTrio.map(function(sh){
+    return {
+      cells: sh.map(function(c){return{r:c.r,c:c.c};}),
+      color: COLS[rngInt(COLS.length)],
+      used: false
+    };
+  });
 
   requestAnimationFrame(function(){requestAnimationFrame(function(){
     renderAllPieces();
@@ -1438,6 +1491,7 @@ function spawnPieces(){
     })(i);});
   });});
 }
+
 
 // ══════════════════════════════════════════════════════════
 // GAME STATE
